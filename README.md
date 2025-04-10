@@ -6,6 +6,7 @@
 
 Veja como é simples registrar e acompanhar um ticket no FixDesk:
 Todos os dados vem diretamento do LDAP (Active Directory)
+
 ![Tela inicial do FixDesk](./files_readme/home_page.jpg)
 
 ![Abertura de ticket](./files_readme/open_ticket.gif)
@@ -13,6 +14,7 @@ Todos os dados vem diretamento do LDAP (Active Directory)
 ##
 
 O Chat é atualizado quando estiver com o chamado aberto de 1 em 1 minuto.
+
 ![Chat em tempo real](./files_readme/send_recive_message.gif)
 
 ##
@@ -74,36 +76,44 @@ Este contem 4 tipo de dados:
   Este mostra a quantidade de chamados abertos pelo tempo pré determinado:
 
   - Pela semana (Mostra dias da semana atual e sua quantidade de chamados)
+
     ![Exemplo do Dashboard Bar Semanal](./files_readme/dashboard_bar_week.jpg)
 
   - Pelo mês (Mostra os dias do mês atual e os chamados abertos respectivamente)
+
     ![Exemplo do Dashboard Bar Mensal](./files_readme/dashboard_bar_month.jpg)
 
   - Pelo ano (Mostra os meses do ano atual e a quantidade de chamados respectivamente)
+
     ![Exemplo do Dashboard Bar Anual](./files_readme/dashboard_bar_year.jpg)
 
   - Total (Mostra a quantidade de chamados por todos os anos que a ferramenta esteve ativa)
+
     ![Exemplo do Dashboard Bar Total](./files_readme/dashboard_bar_all.jpg)
 
 ## Ferramentas do chamado
 
 - PDF e Modificações
   Ao Abrir o chamado na parte superior esquerda tem 2 botões, um dele sendo apra baixar o chamado em formato PDF e outro para modificações, como alterar o responsável pelo atendimento e mudança de status do mesmo.
+
   ![Exemplo de Opções do Chamado](./files_readme/ticket_pdf.jpg)
 
 # - Impressão de PDF
 
 O PDF mostrá as conversas tambem caso ajá alguma e quem enviou, caso aja muitas menssagens será criado novas paginas para mostrar tudo.
+
 ![Exemplo do PDF](./files_readme/pdf_example.jpg)
 
 # - Transfêrencia de responsável
 
 A lista é sempre atualizada buscando pelos membros do grupo de tecnicos pré definido no Django.
+
 ![Exemplo de lista dos tecnicos](./files_readme/tech's.jpg)
 
 # - Mudança de status
 
 Após o chamado ser transferido, quem tiver posse do mesmo pode realizar algumas funções adicionais, como encerar o chamado ou mesmo deixar em modo de aguardo.
+
 ![Exemplo do PDF](./files_readme/status.jpg)
 
 This project is licensed under the [Apache License 2.0](LICENSE).
