@@ -135,4 +135,18 @@ O arquivo `package.json` está configurado para que, ao executar o comando de bu
 
 Certifique-se de que o backend esteja apontando corretamente para a pasta `build/` e que as configurações do Django permitam o uso de arquivos estáticos em produção.
 
+## Ambiente de Produção/Rodando Backend
+
+Se for rodar o FixDesk em ambiente de produção com Docker e Nginx ou Apache, acesse o arquivo `settings.py` do app `fixdesk` e altere o valor de `DEBUG` para `False`.
+
+Além disso, atualize o arquivo `.env` com suas variáveis de ambiente personalizadas para garantir o correto funcionamento da aplicação.
+
+## Ajustes de Autenticação (LDAP)
+
+Caso você **não utilize LDAP**, é possível ajustar facilmente a autenticação diretamente no código.
+
+No arquivo `views.py` do app `fixdesk`, localize a linha **130**, onde a variável `response` chama a função `connect_ldap`. Substitua essa função pelo método de autenticação que desejar utilizar.
+
+Na linha **173**, ajuste o trecho responsável pelo `extractor`, que trata os dados retornados. Altere essa parte para preencher corretamente os dados da sua aplicação na criação da classe.
+
 This project is licensed under the [Apache License 2.0](LICENSE).
