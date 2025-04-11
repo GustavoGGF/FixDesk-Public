@@ -2,6 +2,8 @@
 
 🛠️ Sistema de Help Desk completo com chat em tempo real, gráficos analíticos, notificações automáticas e filtros altamente personalizados — desenvolvido em React + Django + MySQL.
 
+[👉 Pule direto para a seção de instalação](#-instalação-e-uso)
+
 ## 🎥 Demonstração Rápida
 
 Veja como é simples registrar e acompanhar um ticket no FixDesk:
@@ -115,5 +117,7 @@ A lista é sempre atualizada buscando pelos membros do grupo de tecnicos pré de
 Após o chamado ser transferido, quem tiver posse do mesmo pode realizar algumas funções adicionais, como encerar o chamado ou mesmo deixar em modo de aguardo.
 
 ![Exemplo do PDF](./files_readme/status.jpg)
+
+## 🚀 Instalação e Uso
 
 This project is licensed under the [Apache License 2.0](LICENSE).

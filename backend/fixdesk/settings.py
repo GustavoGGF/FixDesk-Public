@@ -100,6 +100,7 @@ WSGI_APPLICATION = "fixdesk.wsgi.application"
 # SQLite é ideal para desenvolvimento, mas em produção, considere usar PostgreSQL, MySQL ou outro SGBD robusto.
 load_dotenv()
 user = getenv("USER_DB")
+database = getenv("FIXDESK_DB")
 pwd = getenv("USER_PWD_DB")
 host = getenv("DB_HOST")
 port = getenv("DB_PORT")
