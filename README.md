@@ -120,4 +120,19 @@ Após o chamado ser transferido, quem tiver posse do mesmo pode realizar algumas
 
 ## 🚀 Instalação e Uso
 
+## Atualização do Frontend
+
+Acesse a pasta `frontend`, instale as dependências executando `npm install` e depois rode `npm run build`.
+
+O arquivo `package.json` está configurado para que, ao executar o comando de build, os arquivos gerados sejam automaticamente copiados para a pasta `build/` do Django. Isso garante que o backend consiga servir corretamente os arquivos estáticos da aplicação.
+
+## Requisitos
+
+- Node.js instalado (versão recomendada: >= 10.8.2)
+- Backend Django configurado
+
+## Observação
+
+Certifique-se de que o backend esteja apontando corretamente para a pasta `build/` e que as configurações do Django permitam o uso de arquivos estáticos em produção.
+
 This project is licensed under the [Apache License 2.0](LICENSE).
