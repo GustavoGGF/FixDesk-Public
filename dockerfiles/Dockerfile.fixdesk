@@ -1,0 +1,18 @@
+# Use a imagem base do Python
+FROM python:3.10.12
+
+# Set the working directory in the container
+WORKDIR /app-Fixdesk
+
+COPY ./FixDesk/backend/requirements.txt ./
+
+RUN python -m venv /fixdesk/venv
+RUN /fixdesk/venv/bin/pip install --no-cache-dir -r requirements.txt
+
+COPY ./FixDesk/backend/ .
+
+# Expose port 4444  to the outside world
+EXPOSE 4444
+
+# Define the command to run your application
+CMD ["/bin/bash", "-c", "source /fixdesk/venv/bin/activate && gunicorn fixdesk.wsgi:application --bind 0.0.0.0:4444 --log-file /var/log/gunicorn.log"]

@@ -1,0 +1,31 @@
+services:
+  fixdesk:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile.fixdesk
+    volumes:
+      - ./FixDesk/backend:/app-FixDesk
+    env_file:
+      - ./FixDesk/backend/.env
+    networks:
+      - common_network
+    container_name: fixdesk
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile.nginx
+    ports:
+      - "443: 443" #Porta padrão SSL
+      - "4444:4444"
+    depends_on:
+      - fixdesk
+      - techmind
+    networks:
+      - common_network
+    container_name: nginx_proxy
+
+networks:
+  common_network:
+    driver: bridge
+    name: common_network

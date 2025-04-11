@@ -1,0 +1,33 @@
+FROM nginx:latest
+
+RUN mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+
+COPY ./nginx-configs/fixdesk.conf /etc/nginx/sites-available/
+COPY ./nginx-configs/techmind.conf /etc/nginx/sites-available/
+
+RUN chown -R nginx:nginx /var/cache/nginx
+
+RUN ln -s /etc/nginx/sites-available/fixdesk.conf /etc/nginx/sites-enabled/
+RUN ln -s /etc/nginx/sites-available/techmind.conf /etc/nginx/sites-enabled/
+
+RUN mkdir -p /etc/nginx/ssl
+
+COPY ./certs/* /etc/nginx/ssl/
+
+# Cria o diretório para logs
+RUN mkdir -p /var/log/nginx
+
+COPY ./nginx-configs/nginx.conf /etc/nginx/
+
+RUN mkdir -p /etc/nginx/logs/
+
+RUN mkdir -p /var/www/html/fixdesk-static
+RUN mkdir -p /var/www/html/techmind-static
+
+COPY ./FixDesk/backend/build/index.html /var/www/html/fixdesk-static
+COPY ./FixDesk/backend/build/asset-manifest.json /var/www/html/fixdesk-static
+COPY ./FixDesk/backend/build/static/ /var/www/html/fixdesk-static
+
+COPY ./TechMind/backend/static/ /var/www/html/techmind-static
+
+ENTRYPOINT ["nginx", "-g", "daemon off;"]

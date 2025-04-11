@@ -149,4 +149,19 @@ No arquivo `views.py` do app `fixdesk`, localize a linha **130**, onde a variáv
 
 Na linha **173**, ajuste o trecho responsável pelo `extractor`, que trata os dados retornados. Altere essa parte para preencher corretamente os dados da sua aplicação na criação da classe.
 
+## Configurando Docker
+
+Para rodar o FixDesk com Docker, utilize o arquivo `docker-compose.yml` disponível no projeto. A porta padrão configurada é **4444**, mas caso queira alterá-la, será necessário modificar:
+
+- A porta exposta no serviço do Nginx dentro do `docker-compose.yml`
+- A porta configurada no `Dockerfile.fixdesk`
+
+Certifique-se de manter a consistência da porta em todas as configurações para evitar conflitos.
+
+## Configurando Nginx
+
+Dentro da pasta `nginx-configs`, está a configuração do servidor responsável por disponibilizar o FixDesk. O servidor está definido como **server_fixdesk**.
+
+O `Dockerfile` do Nginx está preparado para buscar os certificados SSL em uma pasta chamada `certs`. Você pode gerar um certificado autoassinado e colocá-lo dentro dessa pasta — ele será reconhecido automaticamente e funcionará corretamente.
+
 This project is licensed under the [Apache License 2.0](LICENSE).
