@@ -460,15 +460,17 @@ def verify_valid_or_not(file: InMemoryUploadedFile, types: list):
     image_bytes = file.read()
     mime = Magic()
     file_type = mime.from_buffer(image_bytes)
+    file_type = file_type.split(',')[0].strip()
     valid = False
     for typeUn in types:
         if typeUn.replace('"', "").lower() in file_type.lower():
             valid = True
             break
-    return valid, image_bytes
+        
+    return valid, image_bytes, file_type
 
 
-def process_files(file: TicketFile):
+def process_files(ticket_files):
     """
     Processa arquivos de diferentes tipos (imagem, texto, documentos) e converte seu conteúdo para uma representação base64.
 
@@ -483,75 +485,57 @@ def process_files(file: TicketFile):
         - name_file: Contém os nomes dos arquivos processados.
         - image_data: Contém os dados específicos de imagem ou tipo detectado.
     """
-    image_data = []
-    name_file = []
-    content_file = []
-    try:
-        with file.file.open() as img:
-            pil_image = Image.open(img)
-            img_bytes = BytesIO()
-            pil_image.save(img_bytes, format="PNG")
+    contents = []
+    names = []
+    types_list = []
 
-            image_data.append(
-                {"image": b64encode(img_bytes.getvalue()).decode("utf-8")}
-            )
-            content_file.append("img")
-            name_file.append("/".join(str(file.file).split("/")[2:]))
-            file_abs_path = path.join(getcwd(), file_path)
+    for tf in ticket_files:  # Agora iteramos sobre a lista de TicketFiles
+        raw = tf.data
+        if not raw:
+            continue  # Pula arquivos sem dados
 
-            if not path.exists(file_abs_path):
-                print(f"Arquivo não encontrado: {file_abs_path}")
-                pass
-            file.file.close()
-
-    except UnidentifiedImageError:
+        # Tenta processar como imagem
         try:
-            file.file.open()
-            image_bytes = file.file.read()
+            buf = BytesIO(raw)
+            img = Image.open(buf)
+            out = BytesIO()
+            img.save(out, format="PNG")
 
+            contents.append(b64encode(out.getvalue()).decode())
+            types_list.append("img")
+            names.append(tf.file_name or "unnamed.png")
+        except UnidentifiedImageError:
+            # Não é imagem: tenta detectar o tipo
             mime = Magic()
-            file_type = mime.from_buffer(image_bytes)
-            file_path = str(file.file)
-            file_name = "/".join(file_path.split("/")[2:])
-            file_abs_path = path.join(getcwd(), file_path)
+            mtype = (tf.file_type or mime.from_buffer(raw)).lower()
+            mclean = mtype.split(",")[0].split("(")[0].strip()
 
-            if not path.exists(file_abs_path):
-                print(f"Arquivo não encontrado: {file_abs_path}")
-                pass
-
-            type_mapping = {
+            mapping = {
                 "mail": "mail",
                 "rfc 822 mail": "mail",
+                "application/vnd.ms-outlook": "mail",
                 "cdfv2 microsoft outlook message": "mail",
                 "excel": "excel",
                 "composite document file v2 document": "excel",
+                "microsoft excel 2007+": "excel",
                 "zip": "zip",
                 "utf-8 text": "txt",
                 "ascii text": "txt",
                 "microsoft word": "word",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "word",
                 "pdf document": "pdf",
+                "application/pdf": "pdf"
             }
 
-            type_detected = None
-            for key, value in type_mapping.items():
-                if key in file_type.lower():
-                    image_data.append(value)
-                    type_detected = value
+            for key, val in mapping.items():
+                if mclean.startswith(key):
+                    
+                    contents.append(b64encode(raw).decode())
+                    types_list.append(val)
+                    names.append(tf.file_name or "unnamed")
                     break
 
-            if type_detected:
-                with open(file_path, "rb") as f:
-                    content_file.append(b64encode(f.read()).decode("utf-8"))
-                name_file.append(file_name)
-        except Exception as e:
-            logger.error(f"Error processing file {file.file.name}: {e}")
-            return JsonResponse({"error": str(e)}, status=340)
-
-    except Exception as e:
-        logger.error(f"Unexpected error processing file {file.file.name}: {e}")
-        return JsonResponse({"error": str(e)}, status=340)
-    return content_file, name_file, image_data
-
+    return contents, names, types_list
 
 @require_POST
 @transaction.atomic
@@ -569,6 +553,7 @@ def upload_new_files(request, id):
     :return: Resposta JSON contendo os detalhes do upload, incluindo histórico atualizado e arquivos processados.
     """
     try:
+        ticket_files = []
         other_files = request.FILES.getlist("files")
         ticket = SupportTicket.objects.get(id=id)
         date = request.POST.get("date")
@@ -577,7 +562,7 @@ def upload_new_files(request, id):
 
         if other_files:
             for unit_file in other_files:
-                valid, image_bytes = verify_valid_or_not(unit_file, types_str)
+                valid, image_bytes, file_type = verify_valid_or_not(unit_file, types_str)
 
                 if not valid:
                     image_str = str(unit_file)
@@ -591,23 +576,21 @@ def upload_new_files(request, id):
                             break
 
                 if valid:
-                    Ticket = SupportTicket.objects.get(id=id)
-                    ticket_file = TicketFile(ticket=Ticket)
-                    ticket_file.save()
                     ticket.chat += f",[[Date:{date}],[System:{request.user.first_name} {request.user.last_name} Anexou o arquivo {unit_file}],[Hours:{hours}]]"
-                    ticket_file.file.save(str(unit_file), ContentFile(image_bytes))
-                    ticket.save()
+                    ticket_file = TicketFile(
+                    ticket=ticket, file_name=unit_file.name, file_type=file_type, data=image_bytes
+                    )  
                     ticket_file.save()
+                    ticket_files.append(ticket_file)
 
-        image = TicketFile.objects.filter(ticket_id=id)
-        for file in image:
-            content_file, name_file, image_data = process_files(file)
+        all_contents, all_names, all_types = process_files(ticket_files)
+         
         return JsonResponse(
             {
                 "chat": ticket.chat,
-                "files": image_data,
-                "content_file": content_file,
-                "name_file": name_file,
+                "files": all_contents,
+                "content_file": all_types,
+                "name_file": all_names,
             },
             status=200,
             safe=True,

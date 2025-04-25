@@ -285,6 +285,7 @@ def process_files(request: WSGIRequest, form_data: dict):
             open=True,  # Define o chamado como aberto
         )
 
+        ticket.save()  # Salva o chamado no banco de dados
         images = request.FILES.getlist("image")  # Obtém a lista de arquivos enviados
         mime = Magic()  # Inicializa a biblioteca para detecção de tipo MIME
 
@@ -296,24 +297,18 @@ def process_files(request: WSGIRequest, form_data: dict):
             verify_valid_files =  is_valid_file(file, file_type)
             if not verify_valid_files:
                 denied_files.append(file_type)
-
-            ticket.save()  # Salva o chamado no banco de dados
-
+                continue
+            
             ticket_file = TicketFile(
-                ticket=ticket
-            )  # Cria uma instância de arquivo associado ao chamado
-            ticket_file.file.save(
-                str(file), ContentFile(image_bytes)
-            )  # Salva o arquivo no banco de dados
+                ticket=ticket, file_name=file.name, file_type=file_type, data=image_bytes
+            )  
+            ticket_file.save()
 
-            id = ticket.id  # Obtém o ID do chamado salvo
-
-        return id, 200, denied_files  # Retorna o ID do chamado e status de sucesso
+        return ticket.id, 200, denied_files  # Retorna o ID do chamado e status de sucesso
 
     except Exception as e:
         logger.error(f"Erro no processamento de imagem: {e}")  # Registra erro no log
         return e, 300, denied_files  # Retorna erro interno no processamento
-
 
 def is_valid_file(file: InMemoryUploadedFile, file_type: str) -> bool:
     """Valida se um arquivo enviado pertence a uma lista de tipos aceitos."""
@@ -624,7 +619,7 @@ def ticket(
                     )
 
             # Processamento de arquivos do ticket (imagens ou outros arquivos)
-            image_data, content_file, name_file = process_ticket_files(id)
+            image_data, content_file, name_file = process_ticket_files(ticket)
 
             # Serializa as informações do ticket
             serialized_ticket = {
@@ -1246,57 +1241,58 @@ def process_ticket_files(ticket_id):
     content_file = []
     name_file = []
 
-    act_dir = f"{getcwd()}/uploads/{ticket_id}"
-    if not (exists(act_dir) and isdir(act_dir)):
-        return image_data, content_file, name_file
-
-    ticket_files = TicketFile.objects.filter(ticket_id=ticket_id)
+    ticket_files = TicketFile.objects.filter(ticket=ticket)
     mime = Magic()
 
-    for file in ticket_files:
-        file_path = str(file.file)
-        file_name = "/".join(file_path.split("/")[2:])
-        file_abs_path = path.join(getcwd(), file_path)
+    for tf in ticket_files:
+            raw = tf.data
+            if not raw:
+                continue
 
-        if not path.exists(file_abs_path):
-            print(f"Arquivo não encontrado: {file_abs_path}")
-            continue
+            # nome que você salvou no campo file_name
+            fn = tf.file_name or "file"
 
-        try:
-            with file.file.open() as img:
-                pil_image = Image.open(img)
-                img_bytes = BytesIO()
-                pil_image.save(img_bytes, format="PNG")
-                image_data.append(
-                    {"image": b64encode(img_bytes.getvalue()).decode("utf-8")}
-                )
+            # tenta abrir como imagem
+            try:
+                img_buf = BytesIO(raw)
+                pil = Image.open(img_buf)
+                out = BytesIO()
+                pil.save(out, format="PNG")
+
+                image_data.append({ "image": b64encode(out.getvalue()).decode() })
                 content_file.append("img")
-                name_file.append(file_name)
+                name_file.append(fn)
+                continue
 
-        except UnidentifiedImageError:
-            with file.file.open("rb") as f:
-                file_content = f.read()
-                file_type = mime.from_buffer(file_content).lower()
-                file_type_clean = plt(r",|\(", file_type)[0].strip()
+            except UnidentifiedImageError:
+                # não é imagem, pega o tipo salvo ou detecta via magic
+                ft = (tf.file_type or mime.from_buffer(raw)).lower()
+                ft_clean = ft.split(",")[0].split("(")[0].strip()
 
-                type_mapping = {
+                # seu mapeamento de extensões
+                mapping = {
                     "mail": "mail",
                     "rfc 822 mail": "mail",
+                    "application/vnd.ms-outlook": "mail",
                     "cdfv2 microsoft outlook message": "mail",
                     "excel": "excel",
                     "composite document file v2 document": "excel",
+                    "microsoft excel 2007+": "excel",
                     "zip": "zip",
                     "utf-8 text": "txt",
                     "ascii text": "txt",
                     "microsoft word": "word",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "word",
                     "pdf document": "pdf",
+                    "application/pdf": "pdf"
                 }
 
-                for key, value in type_mapping.items():
-                    if file_type_clean.startswith(key):
-                        image_data.append(value)
-                        content_file.append(b64encode(file_content).decode("utf-8"))
-                        name_file.append(file_name)
+                # encontra o tipo
+                for k,v in mapping.items():
+                    if ft_clean.startswith(k):
+                        image_data.append(v)
+                        content_file.append(b64encode(raw).decode())
+                        name_file.append(fn)
                         break
 
     return image_data, content_file, name_file
