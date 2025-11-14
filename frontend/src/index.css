@@ -19,6 +19,7 @@
   --aqua-mist: #9bdaeb;
   --reddish-orange: #d84b00;
   --disable-color: #e9ecef;
+  --light-gray: #f2e9e4;
 }
 
 @keyframes file {
@@ -49,9 +50,94 @@
   position: absolute;
 }
 
+.mn-h-20 {
+  min-height: 20em;
+}
+
+.mb-10 {
+  margin-bottom: 10em !important;
+}
+
+.tooltip-custom {
+  border-radius: 4px;
+  text-align: center;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.tooltip-custom-2 {
+  background-color: var(--sky-blue);
+  color: white;
+  font-weight: bold;
+}
+
+.pd-b-3 {
+  padding-bottom: 3em !important;
+}
+
+.tooltip-custom-2::after {
+  content: "";
+  position: absolute;
+  top: 100%; /*coloca abaixo do tooltip*/
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: var(--sky-blue) transparent transparent transparent;
+  border-radius: 1em;
+}
+
+.pd-1 {
+  padding: 1em;
+}
+
+.w-35 {
+  width: 35em;
+}
+
+.w-top-n-2 {
+  margin-top: -2em;
+}
+
+.w-2 {
+  width: 2em;
+}
+
+.w-3 {
+  width: 3em;
+}
+
+.w-2-5 {
+  width: 2.5em;
+}
+
+.h-2-5 {
+  height: 2.5em !important;
+}
+
+.mg-1 {
+  margin: 1em;
+}
+
+.p-0-6 {
+  padding: 0.6em;
+}
+
 .DIV1:hover {
   -webkit-transform: scale(1.1);
   transform: scale(1.1);
+}
+
+.bg-pure-white {
+  background-color: var(--pure-white);
+}
+
+.bg-light-gray {
+  background-color: var(--light-gray);
+}
+
+.mt-16 {
+  margin-top: 16em;
 }
 
 .p-chat {
@@ -60,6 +146,26 @@
   margin-top: 3px;
   padding-left: 1em;
   padding-right: 1em;
+}
+
+.bd-rd-1 {
+  border-radius: 1em;
+}
+
+.bd-none {
+  border: none;
+}
+
+.hg-2 {
+  height: 2em;
+}
+
+.wd-35 {
+  width: 35em;
+}
+
+.h-4 {
+  height: 4em !important;
 }
 
 .tChat1 {
@@ -514,6 +620,17 @@
   min-width: 7%;
 }
 
+.u-chat-3D {
+  background: #ade8f4;
+  border-radius: 20px;
+  padding: 10px;
+  margin-top: 3px;
+  width: 100%;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+
 .ticket-hover {
   transform: scale(1) !important;
   -webkit-transform: scale(
@@ -554,4 +671,12 @@
 
 .transform-y-25 {
   transform: translateY(25%);
+}
+
+.mt7 {
+  margin-top: 7em;
+}
+
+.pointer-auto {
+  pointer-events: auto !important;
 }
