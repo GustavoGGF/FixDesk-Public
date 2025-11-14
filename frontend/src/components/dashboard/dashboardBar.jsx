@@ -85,44 +85,57 @@ export default function DashboardBar() {
       method: "GET",
       headers: {
         Accept: "application/json",
-        "Cache-Control": "no-cache",
       },
     })
       .then((response) => {
         if (response.status === 204) {
-          return RecallGetBarData({ range: range_days });
+          var day = ""
+          switch(range_days){
+            case "week": 
+              day = "month";
+              break;
+            case "month": 
+              day = "year";
+              break;
+            case "year": 
+              day = "all";
+              break;
+          }
+          return RecallGetBarData({ range: day });
         }
         return response.json();
       })
       .then((data) => {
-        try {
-          setHistogramData([]);
-          switch (range_days) {
-            default:
-              break;
-            case "week":
-              barChartData = range_days;
+        if(data){
+          try {
+            switch (range_days) {
+              default:
+                break;
+              case "week":
+                barChartData = range_days;
 
-              setLabelDash("Chamados da Semana");
-              break;
-            case "month":
-              barChartData = range_days;
-              setLabelDash("Chamados do Mês");
-              break;
-            case "year":
-              barChartData = "year";
-              setLabelDash("Chamados deste Ano");
-              break;
-            case "all":
-              barChartData = "all";
-              setLabelDash("Todos os Chamados");
-              break;
+                setLabelDash("Chamados da Semana");
+                break;
+              case "month":
+                barChartData = range_days;
+                setLabelDash("Chamados do Mês");
+                break;
+              case "year":
+                barChartData = "year";
+                setLabelDash("Chamados deste Ano");
+                break;
+              case "all":
+                barChartData = "all";
+                setLabelDash("Todos os Chamados");
+                break;
+            }
+            setBarChatDataRange(barChartData);
+            setHistogramData(data);
+          } catch (err) {
+            return console.log(err);
           }
-          setBarChatDataRange(barChartData);
-          setHistogramData(data);
-        } catch (err) {
-          return console.log(err);
         }
+
       })
       .catch((err) => {
         setMessageBar(true);
@@ -134,9 +147,8 @@ export default function DashboardBar() {
   function RecallGetBarData({ range }) {
     try {
       switch (range) {
-        default:
-          break;
         case "week":
+          setHistogramData([])
           selectPeriod.current.value = "2";
           setMessageBar(true);
           setTypeError("Falta de Dados");
@@ -150,6 +162,17 @@ export default function DashboardBar() {
           setMessageBar(true);
           setTypeError("Falta de Dados");
           setMessageError("Buscando Chamados do Ano");
+          barChartData = "";
+          setBarChatDataRange("");
+          console.log("at");
+          
+          GetDataBar({ range_days: "year" });
+          break;
+        case "year":
+          selectPeriod.current.value = "4";
+          setMessageBar(true);
+          setTypeError("Falta de Dados");
+          setMessageError("Buscando todos os Chamados");
           barChartData = "";
           setBarChatDataRange("");
           GetDataBar({ range_days: "year" });
@@ -276,9 +299,6 @@ export default function DashboardBar() {
 
       switch (period) {
         case "1":
-          // setCountAccess(count);
-          // setHistogramData([]);
-          // setOldHistogramData([]);
           GetDataBar({ range_days: "week" });
           break;
         case "2":
