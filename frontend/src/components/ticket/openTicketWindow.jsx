@@ -14,7 +14,6 @@ import {
   BtnChat2,
   InputFile,
   DivImageOpen,
-  BtnOpen,
   ImageOpen,
   Close,
   BtnChat,
@@ -40,7 +39,7 @@ import { DropDown, DropBTN, DropContent2 } from "../../styles/navbarStyle";
 import { MessageContext } from "../../context/MessageContext";
 import downTick from "../../images/components/attachment.png";
 import closeIMG from "../../images/components/close.png";
-import { TextObersavation } from "../../styles/dashboardTI";
+import { TextObersavation } from "../../styles/dashboardTI/dashboardTI";
 import mailImage from "../../images/components/mail.png";
 import downloadImage from "../../images/components/download.png";
 import XLSImage from "../../images/components/xlsx.png";
@@ -99,6 +98,7 @@ export default function OpenTicketWindow({
   const [detailsChat, setDetailsChat] = useState("");
   const [modelName, setModelName] = useState("");
   const [dateEquipament, setDateEquipament] = useState("");
+  // const [pointer, setPointer] = useState("");
 
   const [uploadNewFiles, setUploadNewFiles] = useState([]);
   const [fileticket, setFileTicket] = useState([]);
@@ -184,6 +184,9 @@ export default function OpenTicketWindow({
     document.addEventListener("click", handleCloseConfigs);
     return () => document.removeEventListener("click", handleCloseConfigs);
   }, [handleCloseConfigs]);
+
+  // Setando se pode ou não copiar as informações do chamado
+  const pointer = helpdesk === "dashboard" ? "pointer-auto" : "";
 
   useEffect(() => {
     if (dateAlocate && dateAlocate.length !== 0) {
@@ -633,7 +636,6 @@ export default function OpenTicketWindow({
       if (textChat.length === 0) {
         return;
       }
-
       // Envia a mensagem do chat para o servidor
       fetch("/helpdesk/ticket/" + ticketID, {
         method: "POST",
@@ -715,7 +717,7 @@ export default function OpenTicketWindow({
           setNewFiles(false);
           // Recarrega a visualização dos arquivos e o chat com as novas informações
           ReloadFiles({
-            files: data.files,
+            files: data.image_data,
             name_file: data.name_file,
             content_file: data.content_file,
           });
@@ -1153,7 +1155,7 @@ export default function OpenTicketWindow({
           chatValue.push([value1, value2, value3]);
         }
 
-        setMountChat([]); // Limpa as mensagens já montadas.
+        setMountDetails(""); // Limpa as mensagens já montadas.
         setIsAtButton(false);
 
         const groupedByDate = {};
@@ -1184,7 +1186,7 @@ export default function OpenTicketWindow({
                   return (
                     <div key={index}>
                       <div className="justify-content-start w-100 text-break position relative">
-                        <div className="u-chat-2D position-relative">
+                        <div className="u-chat-3D position-relative">
                           <p>{chat}</p>
                           <PChatHourL className="position-absolute bottom-0 start-0">
                             {time}
@@ -1296,6 +1298,12 @@ export default function OpenTicketWindow({
           .then((response) => {
             if (response.status === 200) {
               return response.json();
+            } else if (response.status === 302) {
+              setMessageError(
+                "Metodologia desconhecida para transferir o chamado a alguém que já é responsável por ele."
+              );
+              setTypeError("AÇÃO DESCONHECIDA");
+              setMessage(true);
             }
           })
           .then((data) => {
@@ -1409,7 +1417,7 @@ export default function OpenTicketWindow({
           <input
             type="text"
             value={"Usuário: " + ticketNAME}
-            className="form-control disabled"
+            className={`form-control disabled ${pointer}`}
           />
           <input
             type="text"
@@ -1419,7 +1427,7 @@ export default function OpenTicketWindow({
           <input
             type="text"
             value={"Email: " + ticketMAIL}
-            className="form-control disabled"
+            className={`form-control disabled ${pointer}`}
             hidden={ticketMAIL.length > 1 ? false : true}
           />
           <input
@@ -1445,17 +1453,17 @@ export default function OpenTicketWindow({
           {showEquipament && (
             <DivColorGray>
               <ImgMachines
-                src={`http://Endreço:porta/url-do-seu/servidor-que-ira/disponibilizar-a-imagem/${modelName}`}
+                src={`http://sappp01:3000/home/computers/get-image/${modelName}`}
                 className="img-fluid"
                 alt={`imagem ${modelName}`}
               />
               <input
                 value={"Modelo: " + modelName}
-                className="form-control disabled"
+                className={`form-control disabled ${pointer}`}
               />
               <input
                 value={"ID do Equipamento: " + equipament}
-                className="form-control disabled"
+                className={`form-control disabled ${pointer}`}
               />
               <input value={dateEquipament} className="form-control disabled" />
             </DivColorGray>
@@ -1463,7 +1471,7 @@ export default function OpenTicketWindow({
           <TextObersavation
             ref={textareaRef}
             name="observation"
-            className="autosize-textarea disabled"
+            className={`autosize-textarea disabled ${pointer}`}
           >
             {observation}
           </TextObersavation>
@@ -1519,19 +1527,19 @@ export default function OpenTicketWindow({
         )}
       </div>
       {imageopen && (
-        <DivImageOpen className="position-fixed top-50 start-50 translate-middle d-flex justify-content-center align-items-center">
+        <DivImageOpen className="position-fixed top-50 start-50 translate-middle d-flex justify-content-center align-items-center w-100 h-100">
           <ImageOpen src={imageUrl} alt="" />
-          <BtnOpen
+          <btn
             onClick={() => {
               ticketRef.current.style.filter = "blur(0)";
               ticketRef.current.style.background = "var(--pure-white)";
               ticketOpen.current.style.overflowY = "auto";
               setImageOpen(false);
             }}
-            className="position-absolute top-0 end-0"
+            className="position-absolute bottom-0 start-50 translate-middle-x mb-10 btn btn-danger"
           >
-            <Close src={closeIMG} alt="Fechar" />
-          </BtnOpen>
+            Fechar
+          </btn>
         </DivImageOpen>
       )}
       {newFiles && (
@@ -1557,7 +1565,10 @@ export default function OpenTicketWindow({
             <DivHR></DivHR>
             <button
               className="btn btn-success w-50 mt-2"
-              onClick={SubmitNewFiles}
+              onClick={() => {
+                setFileTicket([]);
+                SubmitNewFiles();
+              }}
             >
               Enviar
             </button>
