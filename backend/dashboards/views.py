@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt, requires_csrf_token
-from os import getcwd, getenv, path
+from os import getenv
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -13,7 +13,6 @@ from datetime import date, datetime, timedelta
 from django.db.models import Q
 from magic import Magic
 from mimetypes import guess_type
-from django.core.files.base import ContentFile
 from PIL import Image, UnidentifiedImageError
 from io import BytesIO
 from base64 import b64encode
@@ -28,13 +27,13 @@ from django.db.models import Count
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db.models import F, Func, IntegerField
 from django.views.decorators.cache import cache_page
+from helpdesk.views import process_ticket_files
 
 # Configuração básica de logging
 basicConfig(level=WARNING)
 logger = getLogger(__name__)
 
 tech_group = getenv("DJANGO_GROUP_TECH")
-leader_group = getenv("DJANGO_GROUP_LEADER")
 status_mapping = {"open": True, "close": False, "stop": None, "all": "All"}
 types_str = getenv("VALID_TYPES")
 
@@ -52,9 +51,9 @@ def dashboard_ti(request: WSGIRequest):
         # Obtém o usuário autenticado da requisição.
         user = request.user
 
-        # Verifica se o usuário pertence aos grupos de 'tech_group' ou 'leader_group'.
+        # Verifica se o usuário pertence aos grupos de 'tech_group''.
         # Caso contrário, ele não terá permissão para acessar o dashboard.
-        if not user.groups.filter(name__in=[tech_group, leader_group]).exists():
+        if not user.groups.filter(name__in=[tech_group]).exists():
             # Registra um alerta no log informando que o usuário não tem permissão para acessar.
             logger.warning(
                 f"Usuário {user.username} não tem permissão para acessar o dashboard TI."
@@ -239,26 +238,33 @@ def get_dash_board_bar(request: WSGIRequest, range_days: str):
         try:
             # Obtém a data atual
             today = date.today()
-
             # Obtém a semana e o ano atuais corretamente
             current_week, current_year = today.isocalendar()[1], today.isocalendar()[0]
-
             # Filtra os tickets com base na data sem hora
+            current_year = date.today().year
+
             tickets_data = SupportTicket.objects.annotate(
                 week_number=Func(
                     F("start_date"),
                     function="WEEK",
-                    template="WEEK(%(expressions)s, 1)",  # Similar ao MySQL WEEK com o parâmetro 1
-                    output_field=IntegerField(),  # Garantir que o retorno seja um inteiro
+                    template="WEEK(%(expressions)s, 1)",
+                    output_field=IntegerField(),
+                ),
+                year=Func(
+                    F("start_date"),
+                    function="YEAR",
+                    output_field=IntegerField(),
                 )
-            ).filter(week_number=current_week)
+            ).filter(
+                week_number=current_week,
+                year=current_year
+            )
 
-            # Debug: Verifique o que está sendo retornado
             if tickets_data.exists():
                 pass
             else:
                 return JsonResponse({"Error": "Falta de dados"}, status=204, safe=True)
-
+            "Fix bug where opening chat details cleared the ticket chat"
             # Lista dos dias da semana em português
             weekdays = [
                 "Segunda-feira",
@@ -469,74 +475,6 @@ def verify_valid_or_not(file: InMemoryUploadedFile, types: list):
         
     return valid, image_bytes, file_type
 
-
-def process_files(ticket_files):
-    """
-    Processa arquivos de diferentes tipos (imagem, texto, documentos) e converte seu conteúdo para uma representação base64.
-
-    A função verifica se o arquivo é uma imagem ou outro tipo de arquivo, realizando o processamento adequado.
-    Para imagens, os dados são convertidos em formato PNG e codificados em base64.
-    Para outros tipos de arquivos, como documentos e e-mails, o tipo MIME é detectado e o conteúdo é codificado em base64.
-    Em caso de erro, a função captura exceções e registra os erros apropriados.
-
-    :param file: Objeto que representa o arquivo a ser processado.
-    :return: Tupla contendo três listas:
-        - content_file: Contém os dados codificados em base64 dos arquivos.
-        - name_file: Contém os nomes dos arquivos processados.
-        - image_data: Contém os dados específicos de imagem ou tipo detectado.
-    """
-    contents = []
-    names = []
-    types_list = []
-
-    for tf in ticket_files:  # Agora iteramos sobre a lista de TicketFiles
-        raw = tf.data
-        if not raw:
-            continue  # Pula arquivos sem dados
-
-        # Tenta processar como imagem
-        try:
-            buf = BytesIO(raw)
-            img = Image.open(buf)
-            out = BytesIO()
-            img.save(out, format="PNG")
-
-            contents.append(b64encode(out.getvalue()).decode())
-            types_list.append("img")
-            names.append(tf.file_name or "unnamed.png")
-        except UnidentifiedImageError:
-            # Não é imagem: tenta detectar o tipo
-            mime = Magic()
-            mtype = (tf.file_type or mime.from_buffer(raw)).lower()
-            mclean = mtype.split(",")[0].split("(")[0].strip()
-
-            mapping = {
-                "mail": "mail",
-                "rfc 822 mail": "mail",
-                "application/vnd.ms-outlook": "mail",
-                "cdfv2 microsoft outlook message": "mail",
-                "excel": "excel",
-                "composite document file v2 document": "excel",
-                "microsoft excel 2007+": "excel",
-                "zip": "zip",
-                "utf-8 text": "txt",
-                "ascii text": "txt",
-                "microsoft word": "word",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "word",
-                "pdf document": "pdf",
-                "application/pdf": "pdf"
-            }
-
-            for key, val in mapping.items():
-                if mclean.startswith(key):
-                    
-                    contents.append(b64encode(raw).decode())
-                    types_list.append(val)
-                    names.append(tf.file_name or "unnamed")
-                    break
-
-    return contents, names, types_list
-
 @require_POST
 @transaction.atomic
 @requires_csrf_token
@@ -579,18 +517,19 @@ def upload_new_files(request, id):
                     ticket.chat += f",[[Date:{date}],[System:{request.user.first_name} {request.user.last_name} Anexou o arquivo {unit_file}],[Hours:{hours}]]"
                     ticket_file = TicketFile(
                     ticket=ticket, file_name=unit_file.name, file_type=file_type, data=image_bytes
-                    )  
+                    )
+                    ticket.save()
                     ticket_file.save()
                     ticket_files.append(ticket_file)
-
-        all_contents, all_names, all_types = process_files(ticket_files)
-         
+        
+        image_data, content_file, name_file = process_ticket_files(ticket)
+        
         return JsonResponse(
             {
                 "chat": ticket.chat,
-                "files": all_contents,
-                "content_file": all_types,
-                "name_file": all_names,
+                "image_data": image_data,
+                "content_file": content_file,
+                "name_file": name_file,
             },
             status=200,
             safe=True,
@@ -618,7 +557,7 @@ def details_chat(request: WSGIRequest, id: int):
         user = request.user  # Obtém o usuário autenticado na requisição.
 
         # Verifica se o usuário pertence a um dos grupos autorizados.
-        if not user.groups.filter(name__in=[tech_group, leader_group]).exists():
+        if not user.groups.filter(name__in=[tech_group]).exists():
             return redirect(
                 "/helpdesk"
             )  # Redireciona para a página do helpdesk caso não autorizado.
@@ -637,3 +576,82 @@ def details_chat(request: WSGIRequest, id: int):
         return JsonResponse(
             {"Error": f"Erro inesperado ao obter detalhes técnicos: {e}"}, status=500
         )
+
+@login_required(login_url="/login")
+@require_GET
+@never_cache
+def get_users_fixdesk(request: WSGIRequest):
+    """
+    View para obter a lista de usuários com algumas informações básicas.
+
+    - Requer que o usuário esteja autenticado.
+    - Aceita apenas requisições GET.
+    - Não permite cache da resposta para garantir dados atualizados.
+
+    Retorna uma lista JSON com:
+    - id
+    - first_name
+    - last_name
+    - grupos (nomes dos grupos aos quais o usuário pertence)
+    """
+    users = User.objects.all()
+    list_users = []
+    for user in users:
+        # Obtém os nomes dos grupos do usuário como lista de strings
+        groups = list(user.groups.values_list('name', flat=True))
+        list_users.append({
+            'id': user.id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'groups': groups  
+        })
+    # Retorna a lista no formato JSON com status 200 OK
+    return JsonResponse(list_users, safe=False, status=200)
+
+@login_required(login_url="/login")
+@require_POST
+def exclude_user(request: WSGIRequest, user: str):
+    """
+    View para excluir um usuário baseado no nome completo (first_name e last_name).
+    
+    - Requer autenticação do usuário.
+    - Aceita apenas requisições POST.
+    
+    Parâmetros:
+    - user: string contendo "first_name last_name" do usuário a ser excluído.
+    
+    Retorna JSON indicando sucesso ou falha:
+    - status 200 e {"success":"ok"} em caso de exclusão bem-sucedida.
+    - status 402 e {"success":"false"} se usuário não existir.
+    - status 400 e mensagem de erro em caso de exceção.
+    """
+    try:
+        # Separa o nome completo em primeiro e último nome
+        username = user.split()
+        first_name = username[0]
+        last_name = username[1]
+        
+        # Verifica se o usuário existe no banco
+        exist = User.objects.filter(first_name=first_name, last_name=last_name).exists()
+        
+        if not exist:
+            # Usuário não encontrado - retorna erro 402
+            return JsonResponse({"success": "false"}, safe=True, status=402)
+                
+        # Busca o usuário
+        exclude_user = User.objects.filter(first_name=first_name, last_name=last_name)
+        
+        # Muda o PID do usuário que sera excluido para 0
+        user_id = User.objects.filter(first_name=first_name, last_name=last_name).first()
+        SupportTicket.objects.filter(PID=user_id.id).update(PID=0)
+        
+        #Exclui o usuário
+        exclude_user.delete()
+        
+        # Retorna sucesso
+        return JsonResponse({"success": "ok"}, safe=True, status=200)
+    
+    except Exception as e:
+        # Loga o erro e retorna resposta com erro 400
+        logger.error(f"Erro ao excluir usuario: {e}")
+        return JsonResponse({"error": f"{e}"}, safe=True, status=400)
