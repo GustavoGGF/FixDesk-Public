@@ -2,13 +2,14 @@ import React, { useEffect, useState, useRef, useContext } from "react";
 import "animate.css";
 
 import "../styles/bootstrap/css/bootstrap.css";
-import Logo from "../images/logos/logo.png";
+import Logo from "../images/logos/lupalogo.png";
 import { Div, IMG, Span } from "../styles/loginStyle";
 import Message from "../components/utility/message";
 import Loading from "../components/loading/loading";
 import { MessageContext } from "../context/MessageContext";
 
 export default function Login() {
+
   useEffect(() => {
     // Função para desabilitar o menu de contexto (botão direito do mouse)
     const handleContextMenu = (event) => {
@@ -62,33 +63,33 @@ export default function Login() {
   }, []);
 
   // Essas são variáveis de estado que são alteradas dinamicamente ao longo do código.
+
   // Constantes Boolean
   const [awaitValidation, setAwaitValidation] = useState(false);
-  const [loginPage, setLoginPage] = useState(true);
   const [passlimit, setPassLimit] = useState(false);
   // Constantes String
-  const [animation, setAnimation] = useState("");
-  const [color, setColor] = useState("");
+
   const [theme, setTheme] = useState("");
+
+  const userRef = useRef(null);
+  const passRef = useRef(null);
+  
+  const animation = useRef("")
+  const color = useRef("")
 
   const { setMessageError, setTypeError, setMessage, message } =
     useContext(MessageContext);
 
   // Esta função é responsável por alterar o tema do site para "black".
   function SetThemeBlack() {
-    setColor("colorBlack");
+    color.current = "colorBlack";
     return setTheme("themeBlack");
   }
   // Esta função é responsável por alterar o tema do site para "white".
   function SetThemeLight() {
-    setColor("colorLight");
+    color.current = "colorLight";
     return setTheme("themeLight");
   }
-
-  // Referencia o input do usuario
-  const userRef = useRef(null);
-  // Referencia o input de senha
-  const passRef = useRef(null);
 
   // Esta função recebe o nome de usuário e senha, envia - os para a view validation e ativa a
   // função handleInvalidCredentials se as credenciais estiverem incorretas, ou a função handleAccessRestricted se não houver permissão.
@@ -99,7 +100,6 @@ export default function Login() {
       const user = userRef.current.value;
       const pass = passRef.current.value;
 
-      setLoginPage(false);
       setPassLimit(false);
       setAwaitValidation(true);
 
@@ -147,9 +147,8 @@ export default function Login() {
     setMessage(true);
     setTypeError("Credencial Inválida");
     setMessageError("Usuário e/ou Senha Inválido(s)");
-    setLoginPage(true);
-    setPassLimit(false);
-    setAnimation("");
+    setPassLimit(true);
+    animation.current = "";
     setAwaitValidation(false);
   }
 
@@ -158,8 +157,8 @@ export default function Login() {
     setMessage(true);
     setTypeError("Acesso Restrito");
     setMessageError("Você não possui permissão para essa Ferramenta");
-    setLoginPage(true);
     setPassLimit(true);
+    animation.current = "";
     setAwaitValidation(false);
   }
 
@@ -169,9 +168,9 @@ export default function Login() {
 
       if (pass.length > 10) {
         setPassLimit(true);
-        setAnimation("animate__bounceIn");
+        animation.current = "animate__bounceIn";
       } else {
-        setAnimation("animate__bounceOut");
+        animation.current = "animate__bounceOut"
       }
     } catch (err) {
       return console.log(err);
@@ -179,7 +178,7 @@ export default function Login() {
   }
 
   useEffect(() => {
-    if (animation === "animate__bounceOut") {
+    if (animation.current === "animate__bounceOut") {
       setTimeout(() => {
         setPassLimit(false);
       }, 500);
@@ -190,7 +189,7 @@ export default function Login() {
     <Div className={theme}>
       {message && (
         <Message
-          className="position-absolute top-0 start-50 translate-middle-x mt-5"
+          className="position-absolute top-0 start-50 translate-middle-x"
           CloseMessage={() => {
             return setMessage(false);
           }}
@@ -201,18 +200,17 @@ export default function Login() {
         alt="Logo da lupatech"
         className="position-absolute top-0 start-20 animate__animated animate__slideInDown"
       />
-      {loginPage && (
+      {!awaitValidation && (
         <div className="position-absolute top-50 start-50 translate-middle d-flex flex-column none animate__animated">
           <form>
-            <Span className={color}>Usuário</Span>
+            <Span className={color.current}>Usuário</Span>
             <input
               ref={userRef}
               type="text"
               className="form-control"
               name="user"
             />
-
-            <Span className={color}>Senha</Span>
+            <Span className={color.current}>Senha</Span>
             <input
               ref={passRef}
               type="password"
@@ -223,7 +221,7 @@ export default function Login() {
 
             {passlimit && (
               <button
-                className={`btn btn-success w-100 ${animation}`}
+                className={`btn btn-success w-100 ${animation.current}`}
                 onClick={Verifylogin}
               >
                 Logar
