@@ -100,6 +100,9 @@ export default function DashboardBar() {
             case "year": 
               day = "all";
               break;
+            default:
+              day = "month";
+              break;
           }
           return RecallGetBarData({ range: day });
         }
@@ -176,6 +179,16 @@ export default function DashboardBar() {
           barChartData = "";
           setBarChatDataRange("");
           GetDataBar({ range_days: "year" });
+          break;
+          default:
+          setHistogramData([])
+          selectPeriod.current.value = "2";
+          setMessageBar(true);
+          setTypeError("Falta de Dados");
+          setMessageError("Buscando Chamados do Mês");
+          barChartData = "";
+          setBarChatDataRange("");
+          GetDataBar({ range_days: "month" });
           break;
       }
     } catch (err) {
