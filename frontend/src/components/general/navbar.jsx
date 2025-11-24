@@ -3,7 +3,7 @@
  * - React: permite a criação e manipulação de componentes React.
  * - useRef: hook utilizado para criar uma referência mutable para elementos do DOM.
  */
-import React, { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Importações de elementos DOM necessárias para este componente, de arquivos CSS, JavaScript, e imagens necessárias para este componente.
@@ -35,20 +35,38 @@ import "../../styles/bootstrap/js/bootstrap.js";
 import Logo from "../../images/logos/fixdesk.png";
 import ImgClose from "../../images/components/close.png";
 import ArrowDown from "../../images/components/caret-down-square.svg";
+import CircularProgress from '@mui/material/CircularProgress'
 
 /**
  * Componente responsável por exibir a barra de navegação do site e informações do usuário.
  * @param {string} Name - Nome do usuário.
  * @param {string} JobTitle - Cargo do usuário.
  */
-export default function NavBar({ Name, JobTitle }) {
+export default function NavBar() {
+
+
+
   /**
-   * Variáveis de referência utilizadas para acessar elementos do DOM neste componente.
-   * - themeOption: referência ao elemento de opções de tema.
-   * - dropContent: referência ao elemento de conteúdo suspenso.
+   * Variáveis de referência e estado utilizadas para acessar elementos do DOM neste componente.
    */
   const themeOption = useRef(null);
   const dropContent = useRef(null);
+  const name = useRef("")
+  const jobTitle = useRef("")
+
+  const [loading, setLoading] = useState(true)
+
+  // UseEffect que obter o nome do usuario e cargo para mostrar na navbar
+  useEffect(()=>{
+    const storedDataUser = localStorage.getItem("dataInfo");
+    if (storedDataUser === null || storedDataUser === "null") {
+      return (window.location.href = "/login");
+    }
+    const dataUserInfo = storedDataUser? JSON.parse(storedDataUser).data: null;
+    name.current = dataUserInfo.name
+    jobTitle.current = dataUserInfo.job_title
+    setLoading(false)
+  },[])
 
   /**
    * Evento de clique utilizado para ocultar ou exibir um elemento.
@@ -154,7 +172,7 @@ export default function NavBar({ Name, JobTitle }) {
    * - Recarrega a página para aplicar as alterações do tema.
    */
   function ThemeLight() {
-    localStorage.setItem("theme", "light");
+    localStorage.setItem("Theme", "light");
 
     return window.location.reload();
   }
@@ -165,7 +183,7 @@ export default function NavBar({ Name, JobTitle }) {
    * - Recarrega a página para aplicar as alterações do tema.
    */
   function ThemeBlack() {
-    localStorage.setItem("theme", "black");
+    localStorage.setItem("Theme", "black");
 
     return window.location.reload();
   }
@@ -190,8 +208,14 @@ export default function NavBar({ Name, JobTitle }) {
             </div>
             <divc className="d-flex">
               <Div1 className="d-flex flex-column">
-                <SpanUser>{Name}</SpanUser>
-                <SpanUser>{JobTitle}</SpanUser>
+                <SpanUser>
+                  {loading && <CircularProgress className="wdgh20" color="success" />}
+                  {!loading && name.current}
+                </SpanUser>
+                <SpanUser>
+                  {loading && <CircularProgress className="wdgh20" color="success" />}
+                  {!loading && jobTitle.current}
+                </SpanUser>
               </Div1>
               <button
                 className="navbar-toggler"
