@@ -6,6 +6,14 @@ export const Select = styled.select`
   -webkit-width: 20em; /* Adicionado para compatibilidade com navegadores baseados em WebKit */
 `;
 
+export const Contract = styled.div`
+  height: 80%;
+  width: 80%;
+  z-index: 1000;
+  margin: 0 auto; /* Adicionado para centralizar o contêiner */
+  position: relative; /* Adicionado para permitir o posicionamento absoluto dos elementos filhos */
+`;
+
 export const DivMachine = styled.div`
   display: flex;
   flex-direction: column;

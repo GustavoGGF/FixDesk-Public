@@ -119,15 +119,6 @@ export const Table = styled.table`
   -webkit-border-collapse: collapse; /* Adicionado para compatibilidade com navegadores baseados em WebKit */
 `;
 
-export const TH = styled.th`
-  width: calc(
-    100% / 6
-  ); /* Dividir a largura total igualmente entre 6 colunas */
-  border: 1px solid black;
-  text-align: center;
-  padding: 10px; /* Ajuste conforme necessário */
-`;
-
 export const TD = styled.td`
   width: calc(
     100% / 6

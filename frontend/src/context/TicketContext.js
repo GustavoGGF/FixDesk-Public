@@ -14,8 +14,10 @@ export const TicketProvider = ({ children }) => {
 
   const [changeTech, setChangeTech] = useState("");
   const [cardOrList, setCardOrList] = useState("");
+  const [ticketIDOpen, setTicketIDOpen] = useState("");
 
   const [ticketData, setTicketData] = useState([]);
+  const [ticketList, setTicketList] = useState([]);
 
   const [totalTickets, setTotalTickets] = useState(0);
 
@@ -40,6 +42,10 @@ export const TicketProvider = ({ children }) => {
         setForcedLoad,
         filterHistory,
         setFilterHistory,
+        ticketIDOpen,
+        setTicketIDOpen,
+        ticketList,
+        setTicketList,
       }}
     >
       {children}

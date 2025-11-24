@@ -5,7 +5,7 @@ import Loading from "../components/loading/loading";
 import Message from "../components/utility/message";
 import NavBar from "../components/general/navbar";
 import "react-day-picker/dist/style.css";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import "../styles/bootstrap/css/bootstrap.css";
 import {
   BtnFile,
@@ -95,26 +95,22 @@ export default function Helpdesk() {
   }, []); // Array de dependências vazio
 
   // Declarando variáveis de estado String
-  const [csrfToken, setCSRFToken] = useState("");
-  const [infoClass, setInfoClass] = useState("");
-  const [infoClass2, setInfoClass2] = useState("");
-  const [infoID, setInfoID] = useState("");
   const [nameOnDropFiles, setNameOnDropFiles] = useState("");
   const [nameOnInutFiles, setNameOnInputFiles] = useState("");
-  const [observation, setObservation] = useState("");
   const [theme, setTheme] = useState("");
   const [themeTicket, setThemeTicket] = useState("");
 
+  // Contexto das Opções Selecionadas
   const {
     messagetitle,
     sector,
     setAlertVerify,
     alertverify,
     alert,
-    setMessagetitle,
     selectedDay,
-    messageinfo2,
     messageinfo1,
+    messageinfo2,
+    messageinfo3,
     linkAcess,
     machineAlocate,
     respectiveArea,
@@ -123,8 +119,10 @@ export default function Helpdesk() {
     setReset,
   } = useContext(OptionsContext);
 
-  const { setTypeError, setMessageError, setMessage, message } =
+  // Contesto das Menssagens
+  const { typeError, messageError, setMessage, message } =
     useContext(MessageContext);
+
   // Declarando variaveis de estado Boolean
   const [dashboard, setDashboard] = useState(false);
   const [fileSizeNotify, setFileSizeNotify] = useState(false);
@@ -132,21 +130,30 @@ export default function Helpdesk() {
   const [inputDropControl, setInputDropControl] = useState(true);
   const [inputManualControl, setInputManualControl] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [navbar, setNavbar] = useState(false);
 
   // Declarando variaveis de estado Vazias
   const [dataUser, setdataUser] = useState();
 
   // Declarando varaiveis de estado array
-  const [arrayInput, setArrayInput] = useState([]);
   const [fileimg, setFileImg] = useState([]);
-  const [filename, setFileName] = useState([]);
+  const [fileName, setFileName] = useState([]);
 
   // Declarando Variaveis Null
   const observationRef = useRef(null);
   const primaryContainerRef = useRef(null);
 
-  let file_name = [];
+  // Variáveis de Referência String
+  const csrfToken = useRef("")
+  const infoClass = useRef("")
+  const infoClass2 = useRef("")
+  const observation = useRef("")
+
+  // Variáveis de Referência Array
+  const arrayInput = useRef([])
+  const file_name = useRef([]);
+
+  // Variáveis de Referência Int
+  const infoID = useRef(0)
 
   // Função que muda o tema pra escuro
   function ThemeBlack() {
@@ -172,7 +179,7 @@ export default function Helpdesk() {
             return response.json();
           })
           .then((data) => {
-            setCSRFToken(data.token);
+            csrfToken.current = data.token;
             // Processa dados do localStorage com segurança
             const storedDataUser = localStorage.getItem("dataInfo");
             if (storedDataUser === null || storedDataUser === "null") {
@@ -184,7 +191,7 @@ export default function Helpdesk() {
             setdataUser(dataUserInfo);
           })
           .catch((err) => {
-            return console.log(err);
+            return console.error(err);
           });
       } catch (error) {
         console.error("Erro na solicitação:", error);
@@ -198,7 +205,6 @@ export default function Helpdesk() {
     if (dataUser && Object.keys(dataUser).length > 0) {
       // Atualiza os estados somente se a condição for atendida
       setLoading(false);
-      setNavbar(true);
       setDashboard(true);
     }
   }, [dataUser]); // Dependência de dataUser para atualizar o efeito quando dataUser mudar
@@ -323,25 +329,25 @@ export default function Helpdesk() {
      * @param {String} occurrence - Uma String representando o tipo de problema.
      * @param {String} problemn - Uma String representando o problema específico.
      * @param {String} setAlertVerify - Uma String para definir o estado do alerta de validação.
-     * @param {String} setMessagetitle - Uma String para definir o título da mensagem de alerta.
+     * @param {String} messagetitle - Uma String para definir o título da mensagem de alerta.
      * @returns {void} - Esta função não retorna nada diretamente, mas exibe alertas se os campos necessários não forem preenchidos.
      */
     try {
-      if (respectiveArea.length === 0) {
+      if (respectiveArea.current.length === 0) {
         setAlertVerify(true);
-        setMessagetitle("Selecione a Área Responsável pelo Chamado");
+        messagetitle.current = "Selecione a Área Responsável pelo Chamado";
         return;
-      } else if (sector.length === 0) {
+      } else if (sector.current.length === 0) {
         setAlertVerify(true);
-        setMessagetitle("Selecione um tipo de ocorrencia");
+        messagetitle.current = "Selecione um tipo de ocorrencia";
         return;
-      } else if (occurrence.length === 0) {
+      } else if (occurrence.current.length === 0) {
         setAlertVerify(true);
-        setMessagetitle("Selecione um tipo de problema");
+        messagetitle.current = "Selecione um tipo de problema";
         return;
-      } else if (problemn.length === 0) {
+      } else if (problemn.current.length === 0) {
         setAlertVerify(true);
-        setMessagetitle("Selecione o problema em especifico");
+        messagetitle.current = "Selecione o problema em especifico";
         return;
       } else {
         setAlertVerify(false);
@@ -384,70 +390,70 @@ export default function Helpdesk() {
       const formdataUser = new FormData();
       var total_size = 0;
 
-      if (filename.length > 0) {
+      if (fileName.length > 0) {
         for (let i = 0; i < fileimg.length; i++) {
           const file = fileimg[i];
           total_size += file.size;
           formdataUser.append("image", file);
         }
       }
-      if (selectedDay.length > 0) {
-        for (let dateObj of selectedDay) {
+      if (selectedDay.current.length > 0) {
+        for (let dateObj of selectedDay.current) {
           const day = dateObj.getDate().toString().padStart(2, "0");
           const month = (dateObj.getMonth() + 1).toString().padStart(2, "0");
           const year = dateObj.getFullYear();
           const dateFormated = `${year}-${month}-${day}`;
           NewDatesAlocate.push(dateFormated);
         }
-        formdataUser.append("id_equipament", machineAlocate);
+        formdataUser.append("id_equipament", machineAlocate.current);
         formdataUser.append("days_alocated", NewDatesAlocate);
       }
 
       if (total_size > 10 * 1024 * 1024) {
         setMessage(true);
-        setTypeError("Capacidade Máxima Ultrapassada");
-        setMessageError("Capacidade Máxima de Arquivos Anexado é de 20MB");
+        typeError.current = "Capacidade Máxima Ultrapassada";
+        messageError.current = "Capacidade Máxima de Arquivos Anexado é de 20MB";
         return;
       }
       formdataUser.append("ticketRequester", dataUser.name);
       formdataUser.append("department", dataUser.departament);
       if (dataUser.departament.length === 0) {
-        setMessageError("Informar TI para atualizar localidade {Departament}");
-        setTypeError("Falta de Dados");
+        messageError.current = "Informar TI para atualizar localidade {Departament}";
+        typeError.current = "Falta de Dados";
         setMessage(true);
         return;
       }
       formdataUser.append("mail", dataUser.mail);
       if (dataUser.mail.length === 0) {
-        setMessageError("Informar TI para atualizar localidade {Mail}");
-        setTypeError("Falta de Dados");
+        messageError.current = "Informar TI para atualizar localidade {Mail}";
+        typeError.current = "Falta de Dados";
         setMessage(true);
         return;
       }
       if (dataUser.company.length === 0) {
-        setMessageError("Informar TI para atualizar localidade {Company}");
-        setTypeError("Falta de Dados");
+        messageError.current = "Informar TI para atualizar localidade {Company}";
+        typeError.current = "Falta de Dados";
         setMessage(true);
         return;
       }
       formdataUser.append("company", dataUser.company);
-      formdataUser.append("sector", sector);
-      formdataUser.append("occurrence", occurrence);
-      formdataUser.append("problemn", problemn);
-      if (observation.length < 2) {
-        setMessageError("Obrigatório Escrever Obversação conforme o chamado");
-        setTypeError("Falta de Dados");
+      formdataUser.append("sector", sector.current);
+      formdataUser.append("occurrence", occurrence.current);
+      formdataUser.append("problemn", problemn.current);
+      if (observation.current.length < 2) {
+        messageError.current = "Obrigatório Escrever Obversação conforme o chamado";
+        typeError.current = "Falta de Dados";
         setMessage(true);
         return;
       }
-      formdataUser.append("observation", observation);
+      formdataUser.append("observation", observation.current);
       formdataUser.append("start_date", dataUserFormatada);
-      formdataUser.append("respective_area", respectiveArea);
+      formdataUser.append("respective_area", respectiveArea.current);
 
       fetch("submit-ticket/", {
         method: "POST",
         headers: {
-          "X-CSRFToken": csrfToken,
+          "X-CSRFToken": csrfToken.current,
         },
         body: formdataUser,
       })
@@ -458,24 +464,23 @@ export default function Helpdesk() {
         .then((data) => {
           if (Status === 200) {
             try {
-              setObservation("");
-              setInfoID(data.id);
-              setInfo(true);
-              setInfoClass("animate__lightSpeedInRight");
+              observation.current = "";
+              infoID.current = data.id;
+              infoClass.current = "animate__lightSpeedInRight";
               setReset(true);
               observationRef.current.value = "";
-              setInfoClass2("closeInfo");
+              infoClass2.current = "closeInfo";
               setNameOnInputFiles("");
               setNameOnDropFiles("");
               setFileSizeNotify(false);
+              setInfo(true);
               setFileImg([]);
               setFileName([]);
-              file_name = [];
-              setArrayInput([]);
+              file_name.current = [];
+              arrayInput.current = [];
               if (data.denied_files.length > 0) {
-                setTypeError("Tipo de Arquivo");
-                const messageError = "Arquivos Negados: " + data.denied_files;
-                setMessageError(messageError);
+                typeError.current = "Tipo de Arquivo";
+                messageError.current = "Arquivos Negados: " + data.denied_files;
                 setMessage(true);
               }
               setTimeout(() => {
@@ -483,15 +488,15 @@ export default function Helpdesk() {
               }, 6000);
               return;
             } catch (err) {
-              return console.log(err);
+              return console.error(err);
             }
           }
         })
         .catch((err) => {
-          return console.log(err);
+          return console.error(err);
         });
     } catch (err) {
-      return console.log(err);
+      return console.error(err);
     }
   }
 
@@ -499,10 +504,10 @@ export default function Helpdesk() {
     try {
       setInputDropControl(true);
       setInputManualControl(false);
-      file_name = fileimg.map((fileItem) => fileItem.name);
-      setFileName(file_name);
+      file_name.current = fileimg.map((fileItem) => fileItem.name);
+      setFileName(file_name.current);
 
-      const paragraphs = file_name.map((fileName, index) => (
+      const paragraphs = file_name.current.map((fileName, index) => (
         <DivNameFile>
           <PNameFile key={index} className="text-break">
             {fileName}
@@ -544,7 +549,7 @@ export default function Helpdesk() {
       setNameOnDropFiles(Div);
       setFileSizeNotify(true);
     } catch (err) {
-      return console.log(err);
+      return console.error(err);
     }
   }
 
@@ -557,7 +562,7 @@ export default function Helpdesk() {
       const files = event.target.files;
 
       const fileList = Array.from(files);
-      setArrayInput(fileList);
+      arrayInput.current = fileList;
 
       const drop = document.getElementById("drop");
       drop.classList.add("hidden");
@@ -605,23 +610,23 @@ export default function Helpdesk() {
       setNameOnInputFiles(paragraphs);
       setFileSizeNotify(true);
     } catch (err) {
-      return console.log(err);
+      return console.error(err);
     }
   }
 
   // Função que remove arquivo anexado para upload
   function RemoveFile(indexToRemove) {
     try {
-      if (arrayInput.length < 1) {
+      if (arrayInput.current.length < 1) {
         setNameOnInputFiles("");
         setInputManualControl(false);
         return;
       }
 
-      const updatedFiles = arrayInput.filter(
+      const updatedFiles = arrayInput.current.filter(
         (_, index) => index !== indexToRemove
       );
-      setArrayInput(updatedFiles);
+      arrayInput.current = updatedFiles;
 
       const updatedParagraphs = updatedFiles.map((file, index) => (
         <DivNameFile key={index}>
@@ -639,27 +644,18 @@ export default function Helpdesk() {
 
       setNameOnInputFiles(updatedParagraphs);
     } catch (err) {
-      return console.log(err);
+      return console.error(err);
     }
   }
 
   return (
     <Div className={theme}>
-      {navbar && (
-        <NavBar
-          Name={dataUser.name}
-          JobTitle={
-            dataUser.job_title.length > 0
-              ? dataUser.job_title
-              : "Informar TI para Atualizar"
-          }
-        />
-      )}
+      <NavBar />
       {info && (
         <Info
-          id={infoID}
-          cls={infoClass}
-          cls2={infoClass2}
+          id={infoID.current}
+          cls={infoClass.current}
+          cls2={infoClass2.current}
           funct={() => {
             setInfo(false);
           }}
@@ -686,7 +682,7 @@ export default function Helpdesk() {
         >
           <TitlePage>Criação de Chamados</TitlePage>
           <div className="mb-3">
-            <input type="hidden" name="_csrf" value={csrfToken} />
+            <input type="hidden" name="_csrf" value={csrfToken.current} />
             <label htmlFor="nameInput" className="form-label">
               Nome
             </label>
@@ -738,17 +734,23 @@ export default function Helpdesk() {
           <TicketsOptions />
           {alert && (
             <div className="alert alert-info d-flex flex-column" role="alert">
-              <h5 className="fw-bold text-center">{messagetitle}</h5>
-              <span>{messageinfo1}</span>
-              <a href={linkAcess} hidden={linkAcess.length >= 1 ? false : true}>
-                Formulário Criação/Exclusão de Usuário
+              <h5 className="fw-bold text-center">{messagetitle.current}</h5>
+              <span>{messageinfo1.current}</span>
+              <a
+                href={linkAcess.current}
+                target="_blank"
+                rel="noopener noreferrer"
+                hidden={linkAcess.length >= 1 ? false : true}
+              >
+                Formulário Lupatech
               </a>
-              <span>{messageinfo2}</span>
+              <span>{messageinfo2.current}</span>
+              <span>{messageinfo3.current}</span>
             </div>
           )}
           {alertverify && (
             <div className="alert alert-danger" role="alert">
-              <h5 className="fw-bold">{messagetitle}</h5>
+              <h5 className="fw-bold">{messagetitle.current}</h5>
             </div>
           )}
           <div className="d-flex flex-column">
@@ -758,7 +760,7 @@ export default function Helpdesk() {
                 className="form-control"
                 id="floatingTextarea2"
                 onChange={(event) => {
-                  setObservation(event.target.value);
+                  observation.current = event.target.value;
                 }}
               ></Textarea>
               <label htmlFor="floatingTextarea2">Observação</label>

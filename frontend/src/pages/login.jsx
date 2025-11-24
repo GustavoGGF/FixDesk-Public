@@ -77,18 +77,18 @@ export default function Login() {
   const animation = useRef("")
   const color = useRef("")
 
-  const { setMessageError, setTypeError, setMessage, message } =
+  const { messageError, typeError, setMessage, message } =
     useContext(MessageContext);
 
   // Esta função é responsável por alterar o tema do site para "black".
   function SetThemeBlack() {
     color.current = "colorBlack";
-    return setTheme("themeBlack");
+    setTheme("themeBlack");
   }
   // Esta função é responsável por alterar o tema do site para "white".
   function SetThemeLight() {
     color.current = "colorLight";
-    return setTheme("themeLight");
+    setTheme("themeLight");
   }
 
   // Esta função recebe o nome de usuário e senha, envia - os para a view validation e ativa a
@@ -133,8 +133,8 @@ export default function Login() {
         .catch((err) => {
           console.error("Erro na validação do login:", err);
           setMessage(true);
-          setMessageError("Erro ao verificar Login", err);
-          setTypeError("Fatal ERROR");
+          messageError.current = "Erro ao verificar Login: " + err;
+          typeError.current = "Fatal ERROR";
           return;
         });
     } catch (err) {
@@ -145,8 +145,8 @@ export default function Login() {
   // Funçaõ mostrada após erro de login por erro na credencial
   function InvalidCredentials() {
     setMessage(true);
-    setTypeError("Credencial Inválida");
-    setMessageError("Usuário e/ou Senha Inválido(s)");
+    typeError.current = "Credencial Inválida";
+    messageError.current = "Usuário e/ou Senha Inválido(s)";
     setPassLimit(true);
     animation.current = "";
     setAwaitValidation(false);
@@ -155,8 +155,8 @@ export default function Login() {
   // Função mostrada após erro de acesso indevido
   function AccessRestricted() {
     setMessage(true);
-    setTypeError("Acesso Restrito");
-    setMessageError("Você não possui permissão para essa Ferramenta");
+    typeError.current = "Acesso Restrito";
+    messageError.current = "Você não possui permissão para essa Ferramenta";
     setPassLimit(true);
     animation.current = "";
     setAwaitValidation(false);

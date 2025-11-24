@@ -1,4 +1,4 @@
-import React, { createContext, useState } from "react";
+import { createContext, useState } from "react";
 
 // Cria o contexto
 export const FilterContext = createContext();
@@ -7,5 +7,9 @@ export const FilterContext = createContext();
 export const FilterProvider = ({ children }) => {
   // Define variáveis de estado
   const [ticketData, setTicketData] = useState([]);
-  return <FilterContext.Provider value={{ ticketData, setTicketData }}>{children}</FilterContext.Provider>;
+  return (
+    <FilterContext.Provider value={{ ticketData, setTicketData }}>
+      {children}
+    </FilterContext.Provider>
+  );
 };

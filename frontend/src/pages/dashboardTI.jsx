@@ -1,25 +1,14 @@
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useContext,
-  useCallback,
-} from "react";
+import { useEffect, useState, useRef, useContext, useCallback } from "react";
 import "react-day-picker/dist/style.css";
-import { Div } from "../styles/dashboardTI.js";
+import {
+  Div,
+  ImgSettings,
+  DivSettings,
+  DivShowOptions,
+} from "../styles/dashboardTI/dashboardTI.js";
 import DashBoardPie from "../components/dashboard/dashboardPie.jsx";
 import Navbar from "../components/general/navbar.jsx";
-import {
-  DivCard,
-  H5Card,
-  SpanCard,
-  TD,
-  TH,
-  TR,
-  TRSPACE,
-  Table,
-  DivZ,
-} from "../styles/historyStyle.js";
+import { DivCard, H5Card, SpanCard, DivZ } from "../styles/historyStyle.js";
 import { TitlePage } from "../styles/helpdeskStyle.js";
 import Message from "../components/utility/message.jsx";
 import "../styles/bootstrap/css/bootstrap.css";
@@ -29,6 +18,11 @@ import FilterTickets from "../components/ticket/filter.jsx";
 import { TicketContext } from "../context/TicketContext.js";
 import { MessageContext } from "../context/MessageContext.js";
 import OpenTicketWindow from "../components/ticket/openTicketWindow.jsx";
+import setingIMG from "../images/components/definicoes.png";
+import ManageUser from "../components/utility/manageUser.jsx";
+import { UserManagementContext } from "../context/UserManagement.js";
+import ExcludeUser from "../components/utility/excludeUser.jsx";
+import ListTable from "../components/table/ListTable.jsx";
 /**
  * Função para ajustar o tema com base na configuração de tema armazenada.
  * - Utiliza o hook useEffect para executar a lógica uma vez após a renderização inicial.
@@ -41,9 +35,9 @@ import OpenTicketWindow from "../components/ticket/openTicketWindow.jsx";
 export default function DashboardTI() {
   useEffect(() => {
     document.title = "DashBoard TI";
-    const theme = localStorage.getItem("theme");
+    const theme = localStorage.getItem("Theme");
     if (theme === null || theme === "black") {
-      localStorage.setItem("theme", "black");
+      localStorage.setItem("Theme", "black");
       return ThemeBlack();
     } else {
       return ThemeLight();
@@ -60,13 +54,13 @@ export default function DashboardTI() {
   const [chat, setChat] = useState(false);
   const [inCard, setInCard] = useState(false);
   const [inList, setInList] = useState(false);
-  const [navbar, setNavbar] = useState(false);
   const [ticketWindow, setTicketWindow] = useState(false);
   const [showEquipament, setShowEquipament] = useState(false);
   const [btnMore, setBtnMore] = useState(false);
   const [initialFileticket, setInitialFileTicket] = useState(false);
   const [mountDataChat, setMountDataChat] = useState(false);
   const [fetchchat, setFetchChat] = useState(false);
+  const [showPageConfig, setShowPageConfig] = useState(false);
   /**
    * Variáveis de estado String
    */
@@ -113,6 +107,7 @@ export default function DashboardTI() {
 
   const sectionTicket = useRef(null);
   const divRefs = useRef({});
+  const timeoutTicketUpdateRef = useRef(null);
 
   const {
     ticketData,
@@ -125,10 +120,95 @@ export default function DashboardTI() {
     setCardOrList,
     forcedLoad,
     setForcedLoad,
+    ticketIDOpen,
+    setTicketIDOpen,
   } = useContext(TicketContext);
 
-  const { setTypeError, setMessageError, setMessage, message } =
+  const { typeError, messageError, setMessage, message } =
     useContext(MessageContext);
+
+  const { setConfigUsers, configUsers, showExcludeUser, setShowExcludeUser } =
+    useContext(UserManagementContext);
+
+  useEffect(() => {
+    if (ticketIDOpen && ticketIDOpen !== "") {
+      HelpdeskPage({ id: ticketIDOpen });
+      setTicketIDOpen("");
+    }
+  }, [ticketIDOpen]);
+
+  /**
+   * useEffect para fechar telas específicas ao pressionar a tecla Escape.
+   *
+   * Escuta eventos de teclado e:
+   * - Fecha a tela de exclusão de usuário se estiver aberta.
+   * - Fecha a tela de configuração de usuários se estiver ativa.
+   *
+   * Remove o listener ao desmontar o componente para evitar vazamentos de memória.
+   */
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Verifica se a tecla pressionada é Escape
+      if ((event.key === "Escape" || event.keyCode === 27) && showExcludeUser) {
+        setShowExcludeUser(false); // Fecha tela de exclusão
+        setConfigUsers(true); // Reabre a configuração de usuários
+        return;
+      } else if (
+        (event.key === "Escape" || event.keyCode === 27) &&
+        configUsers
+      ) {
+        setConfigUsers(false); // Fecha a tela de configuração de usuários
+        return;
+      }
+    };
+
+    // Adiciona listener para evento de keydown
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Remove listener ao desmontar o componente
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [configUsers, showExcludeUser]);
+
+  /**
+   * useEffect para fechar a tela de configuração ao clicar fora dela.
+   *
+   * Adiciona um listener de clique no elemento com id "dashboard-ti".
+   * Se o clique ocorrer fora dos elementos com ids relacionados à configuração,
+   * e a tela de configuração estiver aberta, ela será fechada.
+   *
+   */
+  useEffect(() => {
+    const handleClickOutsideConfig = (event) => {
+      // Verifica se o clique NÃO foi em nenhum dos elementos da configuração
+      if (
+        event.target.id !== "setting" &&
+        event.target.id !== "setting-2" &&
+        event.target.id !== "setting-3" &&
+        event.target.id !== "setting-4" &&
+        event.target.id !== "setting-5"
+      ) {
+        // Se a página de configuração está aberta, fecha-a
+        if (showPageConfig) {
+          setShowPageConfig(false);
+          return;
+        }
+        return;
+      }
+      return;
+    };
+
+    const dashboardElement = document.getElementById("dashboard-ti");
+    dashboardElement.addEventListener("click", handleClickOutsideConfig);
+
+    // Cleanup: remove o listener ao desmontar ou atualizar efeito
+    return () => {
+      dashboardElement.removeEventListener("click", handleClickOutsideConfig);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userData]);
 
   useEffect(() => {
     if (cardOrList && cardOrList.length !== 0) {
@@ -222,8 +302,8 @@ export default function DashboardTI() {
         return userData;
       })
       .catch((err) => {
-        setTypeError("FATAL ERROR");
-        setMessageError(err);
+        typeError.current = "FATAL ERROR";
+        messageError.current = err;
         setMessage(true);
         return console.log(err);
       });
@@ -244,6 +324,8 @@ export default function DashboardTI() {
       try {
         // Verifica se os dados do usuário estão disponíveis e não vazios.
         var quantity = localStorage.getItem("quantity");
+        console.log(quantity);
+        
         if (quantity === null) {
           localStorage.setItem("quantity", "10");
           quantity = 10;
@@ -262,29 +344,9 @@ export default function DashboardTI() {
           order = "-id";
         }
         setDateValue(order);
-
-        setNavbar(true); // Define a flag de exibição da barra de navegação como verdadeira.
-        fetch("get-ticket-ti/" + quantity + "/" + status + "/" + order, {
-          // Faz uma solicitação ao backend para obter os chamados de TI.
-          method: "GET",
-          headers: { Accept: "application/json" },
-        })
-          .then((response) => {
-            return response.json(); // Converte a resposta para JSON.
-          })
-          .then((data) => {
-            setTicketData(data.tickets); // Define os chamados no estado correspondente.
-          })
-          .catch((err) => {
-            // Trata erros.
-            setTypeError("FATAL ERROR"); // Define o tipo de erro como "FATAL ERROR".
-            setMessageError(err); // Define a mensagem de erro.
-            setMessage(true); // Define a flag de exibição de mensagem como verdadeira.
-            return console.log(err); // Registra o erro no console.
-          });
       } catch (err) {
-        setTypeError("FATAL ERROR"); // Define o tipo de erro como "FATAL ERROR".
-        setMessageError(err); // Define a mensagem de erro.
+        typeError.current = "FATAL ERROR"; // Define o tipo de erro como "FATAL ERROR".
+        messageError.current = err; // Define a mensagem de erro.
         setMessage(true); // Define a flag de exibição de mensagem como verdadeira.
         return console.log(err); // Registra o erro no console.
       }
@@ -334,7 +396,6 @@ export default function DashboardTI() {
     try {
       // Limpar o estado e preparar o ambiente
       setTicketsDash([]);
-      setNavbar(true);
       setInCard(true);
       setInList(false);
 
@@ -415,6 +476,9 @@ export default function DashboardTI() {
         if (localStorage.getItem("quantity") > 5) {
           setBtnMore(true);
         }
+
+        // Chama o Loop que busca novos chamados de 1 em 1 minuto
+        return CallNewTicket();
       });
     } catch (err) {
       console.log(err);
@@ -427,8 +491,6 @@ export default function DashboardTI() {
   function ListView() {
     try {
       // Limpar o estado e preparar o ambiente
-      setTicketsDash([]);
-      setNavbar(true);
       setInList(true);
       setInCard(false);
 
@@ -441,80 +503,74 @@ export default function DashboardTI() {
       const btn2 = document.getElementById("select-view-card");
       btn2.style.backgroundColor = "transparent";
 
-      // Mapear os tickets para elementos de lista
-      ticketData.forEach((ticket) => {
-        // Variáveis para montar a data dos chamados.
-        var date = new Date(ticket["start_date"]); // Obtém a data de início do chamado.
-        var day = date.getDate(); // Obtém o dia do mês.
-        var month = date.getMonth() + 1; // Obtém o mês (0 = janeiro, 1 = fevereiro, etc.) e adiciona 1 para corresponder ao formato convencional.
-        var year = date.getFullYear(); // Obtém o ano.
+      if (localStorage.getItem("quantity") > 5) {
+        setBtnMore(true);
+      }
 
-        // Variáveis que contêm data e hora formatadas utilizando a função adicionaZero.
-        var dataFormatada = AddZero(day) + "/" + AddZero(month) + "/" + year;
-        var horaFormatada =
-          AddZero(date.getHours()) + ":" + AddZero(date.getMinutes());
-
-        const newDate = dataFormatada + " " + horaFormatada; // Combina a data e a hora formatadas separadas por um espaço.
-
-        // Ajuste da borda do ticket com base no estado do chamado.
-        if (ticket["open"] === false) {
-          // Se o chamado não estiver aberto, ele foi finalizado.
-          colorBorder = "ticket-close-list"; // Define a borda como indicativa de chamado finalizado.
-        } else if (
-          ticket["open"] === true &&
-          ticket["responsible_technician"] === null
-        ) {
-          // Se o chamado estiver aberto e sem técnico responsável.
-          const currentDate = new Date(); // Obtém a data atual.
-          const differenceMilisecond = currentDate - date; // Calcula a diferença em milissegundos entre a data atual e a data de início do chamado.
-          const differenceDays = differenceMilisecond / (1000 * 60 * 60 * 24); // Converte a diferença para dias.
-          if (differenceDays >= 7) {
-            // Se o chamado estiver aberto há mais de 7 dias.
-            colorBorder = "ticket-urgent-list"; // Define a borda como indicativa de chamado urgente.
-          } else {
-            // Se o chamado estiver aberto há menos de 7 dias.
-            colorBorder = "ticket-open-not-view-list"; // Define a borda como indicativa de chamado aberto, mas não visualizado.
-          }
-        } else if (
-          ticket["open"] === true &&
-          ticket["responsible_technician"] !== null
-        ) {
-          // Se o chamado estiver aberto e com técnico responsável.
-          colorBorder = "ticket-open-in-view-list"; // Define a borda como indicativa de chamado aberto e em atendimento.
-        } else if (ticket["open"] === null) {
-          // Se o estado do chamado for nulo.
-          colorBorder = "ticket-stop-list "; // Define a borda como indicativa de chamado interrompido.
-        }
-
-        const Div = (
-          <TR
-            key={ticket["id"]}
-            ref={(el) => (divRefs.current[`tck${ticket.id}`] = el)}
-            className={`animate__animated animate__backInUp no-border ${colorBorder} tickets-method`}
-            onClick={() => {
-              HelpdeskPage({ id: ticket["id"] });
-            }}
-          >
-            <TD>{ticket["id"]}</TD>
-            <TD>{ticket["ticketRequester"]}</TD>
-            <TD>{ticket["occurrence"]}</TD>
-            <TD>{ticket["problemn"]}</TD>
-            <TD>{newDate}</TD>
-          </TR>
-        );
-
-        const Space = <TRSPACE></TRSPACE>;
-
-        setTicketsDash((ticketsDash) => [...ticketsDash, Div]); // Adiciona o cartão ao array de chamados.
-        setTicketsDash((ticketsDash) => [...ticketsDash, Space]);
-        sectionTicket.current.classList.remove("dash-card"); // remove a classe "dashCard" ao elemento HTML.
-        if (localStorage.getItem("quantity") > 5) {
-          setBtnMore(true);
-        }
-      });
     } catch (err) {
       console.log(err);
     }
+  }
+
+  /**
+   * Esta função atua como um loop controlado via setTimeout para consultar
+   * novos chamados a cada 60 segundos, garantindo que não existam timeouts
+   * concorrentes. Utiliza uma referência para armazenar o identificador do
+   * timeout, permitindo o cancelamento seguro e evitando múltiplas execuções paralelas.
+   */
+  function CallNewTicket() {
+    try {
+      // Se existir um timeout já configurado, cancela antes de agendar outro
+      if (timeoutTicketUpdateRef.current) {
+        clearTimeout(timeoutTicketUpdateRef.current);
+      }
+
+      // Configura um novo timeout para executar após 60 segundos
+      timeoutTicketUpdateRef.current = setTimeout(() => {
+        // Chama a função responsável por buscar novos chamados
+        GetNewTickets();
+
+        // Após execução, limpa o identificador do timeout para indicar inatividade
+        timeoutTicketUpdateRef.current = null;
+      }, 60000);
+    } catch (err) {
+      // Loga qualquer erro ocorrido durante o processo para facilitar debug
+      return console.log(err);
+    }
+  }
+
+  /**
+   * Esta função realiza uma requisição HTTP GET para buscar novos chamados
+   * de acordo com os filtros armazenados no localStorage (quantity, status e order).
+   * Após obter a resposta em JSON, atualiza o estado local com os dados dos chamados.
+   * Em caso de falha, trata o erro exibindo mensagens apropriadas e faz o log no console.
+   */
+  function GetNewTickets() {
+    // Recupera os filtros armazenados no localStorage para definir os parâmetros da requisição
+    var quantity = localStorage.getItem("quantity");
+    var status = localStorage.getItem("status");
+    var order = localStorage.getItem("order");
+
+    // Realiza a requisição GET para a rota 'get-ticket-ti' com os filtros como parâmetros de path
+    fetch("get-ticket-ti/" + quantity + "/" + status + "/" + order, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    })
+      .then((response) => {
+        // Converte a resposta para JSON
+        return response.json();
+      })
+      .then((data) => {
+        // Atualiza o estado local com a lista de chamados retornados
+        setTicketData(data.tickets);
+      })
+      .catch((err) => {
+        // Em caso de erro, define mensagens de erro específicas e loga o erro no console
+        typeError.current = "FATAL ERROR";
+        messageError.current = err;
+        setMessage(true);
+        return console.log(err);
+      });
   }
 
   const handleAnimationEnd = useCallback((event) => {
@@ -729,8 +785,8 @@ export default function DashboardTI() {
           setTicketWindowAtt(false);
         })
         .catch((err) => {
-          setMessageError(err);
-          setTypeError("FATAL ERROR");
+          messageError.current = err;
+          typeError.current = "FATAL ERROR";
           setMessage(true);
           return console.log(err);
         });
@@ -777,16 +833,14 @@ export default function DashboardTI() {
     setChat(false);
     setShowEquipament(false);
     setMountInitialChat([]);
-    return;
+    return GetNewTickets();
   }
 
   return (
-    <Div className={`position-relative ${theme}`}>
-      {navbar && (
-        <div className={blurNav}>
-          <Navbar Name={userData.name} JobTitle={userData.job_title} />
-        </div>
-      )}
+    <Div className={`position-relative ${theme}`} id="dashboard-ti">
+      <div className={blurNav}>
+        <Navbar />
+      </div>
       {message && (
         <DivZ className="position-fixed top-50 start-50 translate-middle z-3">
           <Message
@@ -800,8 +854,44 @@ export default function DashboardTI() {
         Central de Gerenciamento de Chamados TI
       </TitlePage>
       <div
-        className={`d-flex flex-column justify-content-center w-100 ${blurNav} mb-5`}
+        className={`d-flex flex-column justify-content-center w-100 ${blurNav} mb-5 position-relative`}
       >
+        <div
+          className="position-absolute top-0 end-0 d-flex flex-direction-column justify-content-center align-items-center text-align-center"
+          id="setting"
+        >
+          <DivSettings id="setting-2">
+            <ImgSettings
+              src={setingIMG}
+              className="img-fluid pe-auto"
+              id="setting-3"
+              alt="Configurações da Página"
+              onClick={() => {
+                if (showPageConfig) {
+                  setShowPageConfig(false);
+                } else {
+                  setShowPageConfig(true);
+                }
+              }}
+            />
+            {showPageConfig && (
+              <DivShowOptions className="bg-pure-white">
+                <div
+                  id="setting-4"
+                  onClick={() => {
+                    setConfigUsers(true);
+                    setShowExcludeUser(false);
+                    setShowPageConfig(false);
+                  }}
+                >
+                  <b className="pe-none" id="setting-5">
+                    Configuração de Usuários
+                  </b>
+                </div>
+              </DivShowOptions>
+            )}
+          </DivSettings>
+        </div>
         <div className="d-flex justify-content-center w-100">
           <DashBoardPie sector={"TI"} clss={colorTheme} />
         </div>
@@ -809,7 +899,7 @@ export default function DashboardTI() {
           <DashboardBar />
         </div>
       </div>
-      <div className="mt6 position-relative">
+      <div className="mt7 position-relative">
         <FilterTickets
           url={"dashboards"}
           blurNav={""}
@@ -823,16 +913,9 @@ export default function DashboardTI() {
       </div>
       <section ref={sectionTicket} className="mt-3 position-relative">
         {inList && (
-          <Table className="container">
-            <thead className="cla">
-              <TH className={colorTheme}>Chamado</TH>
-              <TH className={colorTheme}>Usuario</TH>
-              <TH className={colorTheme}>Ocorrencia</TH>
-              <TH className={colorTheme}>Descrição</TH>
-              <TH className={colorTheme}>Data Abertura</TH>
-            </thead>
-            <tbody>{ticketsDash}</tbody>
-          </Table>
+          <div className="w-100 d-flex justify-content-center">
+            <ListTable ticket={ticketData} />{" "}
+          </div>
         )}
         {inCard && <>{ticketsDash}</>}
       </section>
@@ -869,7 +952,7 @@ export default function DashboardTI() {
         />
       )}
       {btnMore && (
-        <div className={`w-100 text-center ${blurNav}`}>
+        <div className={`w-100 text-center ${blurNav} mt-5`}>
           <button
             className="btn btn-info mb-5"
             onClick={() => {
@@ -883,6 +966,8 @@ export default function DashboardTI() {
           </button>
         </div>
       )}
+      {configUsers && <ManageUser />}
+      {showExcludeUser && <ExcludeUser token={token} />}
     </Div>
   );
 }

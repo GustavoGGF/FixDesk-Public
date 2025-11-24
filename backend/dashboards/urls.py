@@ -26,4 +26,6 @@ urlpatterns = [
         name="central-upload-new-files",
     ),
     path("details/<int:id>", views.details_chat, name="central-details-chat"),
+    path("get-users-fixdesk/", views.get_users_fixdesk, name="central-get-users"),
+    path("exclude-user/<str:user>", views.exclude_user, name="central-exclude-user")
 ]

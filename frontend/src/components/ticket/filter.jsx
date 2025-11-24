@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useContext } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import {
   DivFilter,
   Input1,
@@ -59,6 +59,7 @@ export default function FilterTickets({
     reloadFilter,
     setReloadFilter,
     setFilterHistory,
+    setTicketList,
   } = useContext(TicketContext);
 
   const { setMessage, setMessageError, setTypeError } =
@@ -86,6 +87,8 @@ export default function FilterTickets({
   }, [totalTickets, reloadFilter]);
 
   useEffect(() => {
+    console.log("moreTickets Antes: ", moreTickets);
+    setTicketData([]);
     if (moreTickets > 0) {
       GetTicketFilter({
         id: "null",
@@ -133,7 +136,7 @@ export default function FilterTickets({
         btnOpen.current.classList.add("btn-open"); // Marca o botão "Open" como ativo
         break;
       case "stop":
-        btnStop.current.classList.add("btn-light"); // Remove o estilo de luz do botão "Stop"
+        btnStop.current.classList.add("btn-stop"); // Remove o estilo de luz do botão "Stop"
         break;
       case "close":
         btnClose.current.classList.add("btn-success"); // Remove o estilo de sucesso do botão "Close"
@@ -172,8 +175,9 @@ export default function FilterTickets({
 
   function GetTicketFilter({ id, quantity, statusTicket, search_query }) {
     try {
-      setTicketData([]);
       setLoadingDash(true);
+      setTicketList([])
+      setTicketData([])
 
       if (id !== "null") {
         switch (id) {
@@ -290,6 +294,8 @@ export default function FilterTickets({
           return response.json();
         })
         .then((data) => {
+          console.log("Tickets depois: ", data.tickets);
+          
           if (data.tickets.length === 0) {
             setMessage(true);
             setTypeError("Falta de dados");
@@ -329,6 +335,7 @@ export default function FilterTickets({
               statusTicket: "null",
               search_query: event.target.value,
             });
+            setTicketList([]);
           }}
         />
         <label htmlFor="floatingInput">Ocorrência | Problema | Data...</label>
@@ -344,6 +351,7 @@ export default function FilterTickets({
             statusTicket: "null",
             search_query: "null",
           });
+          setTicketList([]);
         }}
       >
         <option value="null" selected disabled>
@@ -371,6 +379,7 @@ export default function FilterTickets({
               statusTicket: "null",
               search_query: "null",
             });
+            setTicketList([]);
           }}
         >
           <option value="null" selected disabled>
@@ -400,6 +409,7 @@ export default function FilterTickets({
               statusTicket: "null",
               search_query: "null",
             });
+            setTicketList([]);
           }}
         >
           <option value="null" selected disabled>
@@ -425,6 +435,7 @@ export default function FilterTickets({
             statusTicket: "null",
             search_query: "null",
           });
+          setTicketList([]);
         }}
       >
         <option value="none" disabled>
@@ -447,6 +458,7 @@ export default function FilterTickets({
               statusTicket: "null",
               search_query: "null",
             });
+            setTicketList([]);
           }}
         >
           <IMGS1 src={IMG1} alt="Mostrar apenas 5" />
@@ -462,6 +474,7 @@ export default function FilterTickets({
               statusTicket: "null",
               search_query: "null",
             });
+            setTicketList([]);
           }}
         >
           <IMGS1 src={IMG2} alt="Mostrar apenas 10" />
@@ -477,6 +490,7 @@ export default function FilterTickets({
               statusTicket: "null",
               search_query: "null",
             });
+            setTicketList([]);
           }}
         >
           <IMGS1 src={IMG3} alt="Mostrar apenas 50" />
@@ -492,6 +506,7 @@ export default function FilterTickets({
               statusTicket: "null",
               search_query: "null",
             });
+            setTicketList([]);
           }}
         >
           <IMGS1 src={IMG4} alt="Mostrat todos" />
@@ -507,6 +522,7 @@ export default function FilterTickets({
           id="select-view-list"
           onClick={() => {
             setCardOrList("List");
+            setTicketList([]);
           }}
         >
           <ImgSelectView src={List} className="img-fluid" alt="Modo Lista" />
@@ -535,6 +551,7 @@ export default function FilterTickets({
               statusTicket: "open",
               search_query: "null",
             });
+            setTicketList([]);
           }}
         >
           Aberto
@@ -550,6 +567,7 @@ export default function FilterTickets({
               statusTicket: "close",
               search_query: "null",
             });
+            setTicketList([]);
           }}
         >
           Fechado
@@ -565,6 +583,7 @@ export default function FilterTickets({
               statusTicket: "stop",
               search_query: "null",
             });
+            setTicketList([]);
           }}
         >
           Aguardo
@@ -580,6 +599,7 @@ export default function FilterTickets({
               statusTicket: "all",
               search_query: "null",
             });
+            setTicketList([]);
           }}
         >
           Todos

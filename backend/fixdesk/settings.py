@@ -29,12 +29,12 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 # Lista de hosts/domínios permitidos para servir a aplicação.
 # Em produção, especifique apenas os domínios válidos para evitar
 # ataques de Host Header Injection.
-ALLOWED_HOSTS = ["localhost"]
+ALLOWED_HOSTS = ["localhost", "sappp01.lupatech.com.br", "sappp01", "10.1.1.73", "www.sappp01.lupatech.com.br"]
 
 # Lista de origens confiáveis para proteção CSRF (Cross-Site Request Forgery).
 # Define quais domínios podem enviar requisições POST seguras para a aplicação.
 CSRF_TRUSTED_ORIGINS = [
-    "",
+    "https://sappp01.lupatech.com.br",
 ]
 
 # Lista de aplicativos instalados no projeto Django.
@@ -101,14 +101,13 @@ WSGI_APPLICATION = "fixdesk.wsgi.application"
 # SQLite é ideal para desenvolvimento, mas em produção, considere usar PostgreSQL, MySQL ou outro SGBD robusto.
 load_dotenv()
 user = getenv("USER_DB")
-database = getenv("FIXDESK_DB")
 pwd = getenv("USER_PWD_DB")
 host = getenv("DB_HOST")
 port = getenv("DB_PORT")
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",  # Usa o backend do SQLite3.
-        "NAME": "your_database_dev",  # Caminho para o arquivo do banco de dados.
+        "NAME": "fixdesk_database_dev",  # Caminho para o arquivo do banco de dados.
         "USER": user,
         "PASSWORD": pwd,
         "HOST": host,
@@ -146,7 +145,7 @@ LANGUAGE_CODE = "pt-br"
 
 # Define o fuso horário padrão do projeto.
 # "Brazil/East" refere-se ao fuso horário do Brasil (Horário de Brasília, UTC-3).
-TIME_ZONE = "Brazil/East"
+TIME_ZONE = 'America/Sao_Paulo'
 
 # Habilita a internacionalização (i18n) do projeto.
 # Permite a tradução do projeto para múltiplos idiomas.

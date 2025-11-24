@@ -2,7 +2,7 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from smtplib import SMTP
-from threading import Thread, Timer
+from threading import Thread
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.decorators.csrf import csrf_exempt, requires_csrf_token
 from django.http import JsonResponse
@@ -31,8 +31,6 @@ from mysql import connector
 from decouple import config
 from django.views.decorators.http import require_POST, require_GET
 from django.utils.timezone import make_aware
-from time import time
-from threading import Lock
 from dotenv import load_dotenv
 from django.core.handlers.wsgi import WSGIRequest
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -40,6 +38,7 @@ from django.views.decorators.cache import cache_page
 from requests import get as getUrl
 from django.test import RequestFactory
 from tempfile import NamedTemporaryFile
+from django.contrib.auth.models import User
 
 # Configuração básica de logging
 basicConfig(level=WARNING)
@@ -49,9 +48,8 @@ load_dotenv()
 smtp_host = getenv("SERVER_SMTP")
 smtp_port = getenv("SMPT_PORT")
 mail_address = getenv("MAIL_FIXDESK")
-Back_User = getenv("DJANGO_GROUP_USER")
-Back_Tech = getenv("DJANGO_GROUP_TECH")
-Back_Leader = getenv("DJANGO_GROUP_LEADER")
+user_group = getenv("DJANGO_GROUP_USER")
+group_tech = getenv("DJANGO_GROUP_TECH")
 types_str = getenv("VALID_TYPES")
 mail_password = getenv("MAIL_PWD")
 
@@ -84,13 +82,16 @@ def send_mail(mail: str, msgm1: str, msgm2: str):
 
         # Enviar e-mail
         text_mail = msg.as_string()
-        server_smtp.sendmail(mail_address, mail, text_mail)
+        return server_smtp.sendmail(mail_address, mail, text_mail)
 
     except Exception as e:
-        logger.error(e)  # Registrar erro no log
+        return logger.error(e)  # Registrar erro no log
     finally:
         # Fechar conexão SMTP
-        server_smtp.quit()
+        if server_smtp:
+            return server_smtp.quit()
+        else:
+            return
 
 @csrf_exempt
 @require_GET
@@ -98,7 +99,7 @@ def get_new_token(request):
     try:
         user = request.user
         if user.groups.filter(
-            name__in=[Back_User, Back_Tech, Back_Leader]
+            name__in=[user_group, group_tech]
         ).exists():
             csrf = get_token(request)
         else:
@@ -121,7 +122,7 @@ def first_view(request: WSGIRequest):
         try:
             user = request.user
             if user.groups.filter(
-                name__in=[Back_User, Back_Tech, Back_Leader]
+                name__in=[user_group, group_tech]
             ).exists():
                 return render(request, "index.html", {})
             else:
@@ -203,7 +204,7 @@ def submit_ticket(request):
 
     valid = False  # Flag para verificar se houve processamento válido
     id = None  # Inicializa a variável de ID do chamado
-
+    denied_files = []
     # Verifica se há imagens anexadas no formulário
     if "image" in request.FILES:
         id, status, denied_files = process_files(request, form_data)  # Processa imagens enviadas
@@ -245,7 +246,7 @@ def submit_ticket(request):
         ticket.save()  # Salva o chamado no banco de dados
 
         id = ticket.id  # Obtém o ID do chamado salvo
-
+    
     return JsonResponse(
         {"id": id, "denied_files": denied_files}, status=200, safe=True
     )  # Retorna o ID do chamado criado com sucesso
@@ -282,7 +283,6 @@ def process_files(request: WSGIRequest, form_data: dict):
             PID=request.user.id,  # Define o identificador único do chamado
             open=True,  # Define o chamado como aberto
         )
-
         ticket.save()  # Salva o chamado no banco de dados
         images = request.FILES.getlist("image")  # Obtém a lista de arquivos enviados
         mime = Magic()  # Inicializa a biblioteca para detecção de tipo MIME
@@ -331,8 +331,7 @@ def is_valid_file(file: InMemoryUploadedFile, file_type: str) -> bool:
             else False
         )
     except Exception as e:
-        print(e)
-
+        return logger.error(e)
 
 @csrf_exempt
 @login_required(login_url="/login")
@@ -346,16 +345,14 @@ def history(request: WSGIRequest):
     """
     user = request.user  # Obtém o usuário autenticado
     valid_groups = [
-        Back_User,
-        Back_Tech,
-        Back_Leader,
+        user_group,
+        group_tech,
     ]  # Define os grupos autorizados
 
     # Verifica se o usuário pertence a um dos grupos autorizados
     if not user.groups.filter(name__in=valid_groups).exists():
         return redirect("/login")
     return render(request, "index.html", {})  # Renderiza a página de histórico
-
 
 @login_required(login_url="/login")
 @never_cache
@@ -367,9 +364,8 @@ def history_get_ticket(request, quantity: int, usr: str, status: str, order: str
         csrf = get_token(request)  # Obtém o token CSRF
         user = request.user  # Obtém o usuário autenticado
         valid_groups = [
-            Back_User,
-            Back_Tech,
-            Back_Leader,
+            user_group,
+            group_tech,
         ]  # Define os grupos autorizados
 
         # Verifica se o usuário pertence a um dos grupos autorizados
@@ -400,7 +396,6 @@ def history_get_ticket(request, quantity: int, usr: str, status: str, order: str
         logger.error(e)  # Exibe o erro no console (melhor utilizar logger)
         return JsonResponse({"status": "Invalid Credentials"}, status=402, safe=True)
 
-
 @csrf_exempt
 @require_GET
 def exit(request: WSGIRequest):
@@ -418,7 +413,6 @@ def exit(request: WSGIRequest):
             "Erro inesperado ao fazer logout"
         )  # `logger.exception` já inclui traceback
         return JsonResponse({"Error": f"Erro inesperado {e}"}, status=303)
-
 
 @login_required(
     login_url="/login"
@@ -449,6 +443,9 @@ def ticket(
                 # A função `change_responsible_technician` é chamada para processar a mudança.
                 # Caso o status retornado seja 400, um erro é enviado na resposta.
                 # Se for bem-sucedido, a resposta retorna o chat atualizado, o novo técnico responsável e o ID do ticket.
+                
+                username = request.user.username 
+                
                 status, chat, technician = change_responsible_technician(
                     id,
                     responsible_technician,
@@ -457,10 +454,14 @@ def ticket(
                     hours,
                     techMail,
                     mail,
+                    username,
                 )
 
                 if status == 400:
+                    logger.error("Falta de variaveis obrigatorias")
                     return JsonResponse({"error": f"{chat}"}, status=400, safe=True)
+                elif status == 302:
+                    return JsonResponse({"error": f"{chat}"}, status=302, safe=True)
 
                 tickets_data = SupportTicket.objects.filter(
                     respective_area="TI"
@@ -607,18 +608,16 @@ def ticket(
 
             user = request.user
             # Verifica se o usuário pertence ao grupo "Back_User"
-            if not user.groups.filter(name=Back_User).exists():
-                if not user.groups.filter(name=Back_Tech).exists():
+            if not user.groups.filter(name=user_group).exists():
+                if not user.groups.filter(name=group_tech).exists():
                     return redirect("/helpdesk")
             else:
                 if ticket.PID != request.user.id:
                     return JsonResponse(
                         {"Error": "Chamado não pertence a você"}, status=403, safe=True
                     )
-
             # Processamento de arquivos do ticket (imagens ou outros arquivos)
             image_data, content_file, name_file = process_ticket_files(ticket)
-
             # Serializa as informações do ticket
             serialized_ticket = {
                 "ticketRequester": ticket.ticketRequester,
@@ -706,7 +705,6 @@ def create_pdf(id: int):
     """
 
     try:
-        getLogger("fontTools.subset").setLevel(WARNING)
         # Obtém o ticket de suporte com base no ID fornecido
         ticket = SupportTicket.objects.get(id=id)
 
@@ -717,7 +715,7 @@ def create_pdf(id: int):
         project_root = path.dirname(helpdesk_dir)
 
         # Caminho para a imagem dentro da pasta "files"
-        lupatech_logo = path.join(project_root, "files", "logo.png")
+        lupatech_logo = path.join(project_root, "files", "lupalogo.png")
         fixdesk_logo = path.join(project_root, "files", "fixdesk.png")
         lupatech_footer = path.join(project_root, "files", "footer.png")
         # Cria uma nova instância do FPDF para gerar o PDF
@@ -727,13 +725,16 @@ def create_pdf(id: int):
         # Obtém o diretório de trabalho atual e define a fonte Arial para o PDF
         directory = getcwd()
         pdf.add_font("Arial", "", f"{directory}/arial.ttf")
-        pdf.set_font("Arial", size=12)
+        
 
         # Adiciona o título do chamado ao PDF
         pdf.image(lupatech_logo, x=10, y=0 + 5, w=10)
         pdf.image(fixdesk_logo, x=200, y=0 + 5, w=10)
-        pdf.cell(180, 5, txt=f"CHAMADO {ticket.id}", ln=False, align="C")
-        
+        pdf.set_text_color(255, 0, 0)          # Vermelho
+        pdf.set_font("Arial", style="B", size=20)  # Arial em negrito, tamanho 20
+        pdf.cell(190, 5, txt=f"CHAMADO {ticket.id}", ln=False, align="C")
+        pdf.set_text_color(0, 0, 0)   
+        pdf.set_font("Arial", style="", size=12)
         
         # Adiciona informações do ticket ao PDF
         add_ticket_info_to_pdf(ticket, pdf)
@@ -769,65 +770,31 @@ def add_ticket_info_to_pdf(ticket: SupportTicket, pdf: FPDF):
     """
 
     # Adiciona a data de abertura do ticket ao PDF, formatada como dd/mm/yyyy
-    pdf.cell(
-        200,
-        10,
-        txt=f"Data de Abertura: {ticket.start_date.strftime('%d/%m/%Y')}",
-        ln=True,
-        align="R",
-    )
+    pdf.set_x(10)
+    pdf.set_y(30)
 
-    # Adiciona o nome do usuário que solicitou o ticket
-    pdf.cell(200, 10, txt=f"Usuário: {ticket.ticketRequester}", ln=True, align="L")
+    def add_linha(label, value, align="L"):
+        pdf.cell(50, 10, txt=label, border=1, align="L")
+        pdf.cell(140, 10, txt=value, border=1, ln=True, align=align)
+        
+    add_linha("Data de Abertura:", ticket.start_date.strftime("%d/%m/%Y"))
+    add_linha("Usuário:", ticket.ticketRequester)
+    add_linha("Departamento:", ticket.department)
+    add_linha("Unidade:", ticket.company)
+    add_linha("Setor:", ticket.sector)
+    add_linha("Ocorrência:", ticket.occurrence)
+    add_linha("Problema:", ticket.problemn)
+    add_linha("Setor Responsável:", ticket.respective_area)
+    add_linha("Técnico Responsável:", ticket.responsible_technician or "Técnico não Atribuído")
+    
+    # Para observação que pode ser longa, usamos multi_cell com borda
+    pdf.cell(50, 10, txt="Observação:", border=1, align="L")
+    x, y = pdf.get_x(), pdf.get_y()
+    pdf.multi_cell(140, 10, txt=ticket.observation or "Informação não fornecida", border=1)
+    pdf.set_xy(x + 140, y + 10 * (pdf.get_y() - y) / 10)  # Ajusta a posição para continuar
 
-    # Adiciona o departamento relacionado ao ticket
-    pdf.cell(200, 10, txt=f"Departamento: {ticket.department}", ln=True, align="L")
-
-    # Adiciona a unidade onde o ticket foi gerado
-    pdf.cell(200, 10, txt=f"Unidade: {ticket.company}", ln=True, align="L")
-
-    # Adiciona o setor relacionado ao ticket
-    pdf.cell(200, 10, txt=f"Setor: {ticket.sector}", ln=True, align="L")
-
-    # Adiciona a ocorrência registrada no ticket
-    pdf.cell(200, 10, txt=f"Ocorrência: {ticket.occurrence}", ln=True, align="L")
-
-    # Adiciona o problema descrito no ticket
-    pdf.cell(200, 10, txt=f"Problema: {ticket.problemn}", ln=True, align="L")
-
-    # Adiciona o setor responsável pelo ticket
-    pdf.cell(
-        200, 10, txt=f"Setor Responsável: {ticket.respective_area}", ln=True, align="L"
-    )
-
-    # Adiciona o nome do técnico responsável, ou 'Técnico não Atribuído' se não houver técnico
-    pdf.cell(
-        200,
-        10,
-        txt=f"Técnico Responsável: {ticket.responsible_technician or 'Técnico não Atribuído'}",
-        ln=True,
-        align="L",
-    )
-
-    # Adiciona a observação relacionada ao ticket, ou 'Informação não fornecida' caso não haja
-    pdf.multi_cell(
-        200,
-        10,
-        txt=f"Observação: {ticket.observation or 'Informação não fornecida'}",
-        ln=True,
-        align="L",
-    )
-
-    # Adiciona o status do ticket (Em Aberto ou Finalizado)
-    pdf.cell(
-        200,
-        10,
-        txt=f"Status: {'Em Aberto' if ticket.open else 'Finalizado'}",
-        ln=True,
-        align="L",
-    )
-
-    return
+    pdf.set_x(10)
+    add_linha("Status:", "Em Aberto" if ticket.open else "Finalizado")
 
 
 def add_machine_info_to_pdf(ticket: SupportTicket, pdf: FPDF):
@@ -853,12 +820,11 @@ def add_machine_info_to_pdf(ticket: SupportTicket, pdf: FPDF):
         model_adjust2 = model.replace(" ", "").lower()
         # Adiciona o nome da máquina alocada ao PDF
         pdf.cell(
-            200, 10, txt=f"Máquina Alocada: {ticket.equipament}", ln=True, align="L"
+            190, 10, txt=f"Máquina Alocada: {ticket.equipament}", ln=True, align="L"
         )
-        pdf.cell(200, 10, txt=f"Modelo: {model_adjust}", ln=True, align="L")
+        pdf.cell(190, 10, txt=f"Modelo: {model_adjust}", ln=True, align="L")
         y_atual = pdf.get_y()
-        url = f"http://Endereço:porta/da-sua/aplicação-que/disponibiliza-a-imagem/{model_adjust2}"
-        print(url)
+        url = f"http://sappp01:3000/home/computers/get-image/{model_adjust2}"
 
         # Faz a requisição GET para obter a imagem
         response = getUrl(url)
@@ -876,6 +842,22 @@ def add_machine_info_to_pdf(ticket: SupportTicket, pdf: FPDF):
     except Exception as e:
         logger.error(e)
 
+def agrupar_chat_entries(entries: list[dict]) -> list[dict]:
+    grouped = []
+    current = {}
+
+    for entry in entries:
+        key = list(entry.keys())[0]
+        value = entry[key]
+
+        current[key] = value
+
+        # Quando tivermos "Hours", consideramos o registro completo
+        if key == "Hours":
+            grouped.append(current)
+            current = {}
+
+    return grouped
 
 def add_chat_to_pdf(chat: str, pdf: FPDF):
     """
@@ -887,16 +869,20 @@ def add_chat_to_pdf(chat: str, pdf: FPDF):
     """
 
     # Converte o histórico de chat em uma lista de dicionários
-    chat_dicts = convert_to_dict(chat)
+    chat_dicts_raw = convert_to_dict(chat)
+    chat_dicts = agrupar_chat_entries(chat_dicts_raw)
 
     # Adiciona uma nova página no PDF para o chat
     pdf.add_page()
     
     # Adiciona um título "CHAT" centralizado
-    pdf.cell(200, 10, txt="CHAT", ln=True, align="C")
-
+    pdf.set_text_color(255, 0, 0)          # Vermelho
+    pdf.set_font("Arial", style="B", size=20)  # Arial em negrito, tamanho 20
+    pdf.cell(190, 10, txt="CHAT", ln=True, align="C")
+    
+    pdf.set_text_color(0, 0, 0)   
+    pdf.set_font("Arial", style="", size=12)
     current_date = None
-    print(chat_dicts)
     # Itera sobre cada entrada no histórico de chat
     for entry in chat_dicts:
         # Extrai as informações de data, sistema, técnico, usuário e hora da entrada
@@ -909,23 +895,27 @@ def add_chat_to_pdf(chat: str, pdf: FPDF):
         # Verifica se a data da entrada é diferente da data atual
         if entry_date != current_date:
             current_date = entry_date
+            pdf.set_fill_color(240, 240, 255)
             # Adiciona a data ao PDF, centralizada
-            pdf.cell(200, 10, txt=current_date, ln=True, align="C")
+            pdf.cell(190, 10, txt=current_date, ln=True, align="C", fill=True)
 
         # Adiciona mensagens do sistema ao PDF, centralizadas
         if system_msg:
-            pdf.cell(200, 10, txt=f"{system_msg} - {entry_hour}", ln=True, align="C")
+            pdf.set_fill_color(240, 240, 255)
+            pdf.cell(190, 10, txt=f"{system_msg} - {entry_hour}", ln=True, align="C", fill=True)
 
         # Adiciona mensagens do técnico ao PDF, alinhadas à esquerda
         if technician_msg:
+            pdf.set_fill_color(240, 240, 255)
             pdf.cell(
-                200, 10, txt=f"{technician_msg} - {entry_hour}", ln=True, align="L"
+                190, 10, txt=f"{technician_msg} - {entry_hour}", ln=True, align="L", fill=True
             )
 
         # Adiciona mensagens do usuário ao PDF, alinhadas à esquerda
         if user_msg:
-            pdf.cell(200, 10, txt=f"{user_msg} - {entry_hour}", ln=True, align="L")
-    return
+            pdf.set_fill_color(240, 240, 255)
+            pdf.cell(190, 10, txt=f"{user_msg} - {entry_hour}", ln=True, align="L", fill=True)
+
 
 @transaction.atomic
 def ticket_stop(id: int, technician: str, date: str, hours: str, mail: str):
@@ -1081,7 +1071,6 @@ def ticket_open(
 
         # Adiciona uma mensagem ao histórico do chat informando que o técnico reabriu o ticket
         ticket.chat += f",[[Date:{date}],[System: {technician} Reabriu e atendeu o Chamado],[Hours:{hours}]]"
-
         # Atualiza o e-mail do técnico responsável
         ticket.technician_mail = techMail
 
@@ -1106,6 +1095,12 @@ def ticket_open(
     except Exception as e:
         logger.error(e)
 
+def get_user_by_full_name(full_name):
+    parts = full_name.split()
+    first_name = parts[0]
+    last_name = parts[1] if len(parts) > 1 else ''
+    return User.objects.filter(first_name=first_name, last_name=last_name).first()
+
 @transaction.atomic
 def change_responsible_technician(
     id: int,
@@ -1115,6 +1110,7 @@ def change_responsible_technician(
     hours: str,
     techMail: str,
     mail: str,
+    username: str,
 ):
     """
     Atualiza o técnico responsável por um chamado de suporte e registra a mudança no chat do chamado.
@@ -1142,9 +1138,25 @@ def change_responsible_technician(
 
                 # Envia o e-mail em uma thread separada para evitar bloqueio da execução
                 Thread(target=send_mail, args=(mail, msg, msg2)).start()
+        # Caso já possua menssagem sera tratado como chamdo já atendido
         else:
-            # Se já houver mensagens no chat, adiciona um registro informando a transferência do chamado
-            ticket.chat += f"[[Date:{date}],[System: {technician} transferiu o Chamado para {responsible_technician}],[Hours:{hours}]],"
+            # Obtendo o username do tecnico atual do chamado
+            user_current  = get_user_by_full_name(ticket.responsible_technician)
+
+            #sera validado o username de quem esta alterando o chamado e quem recebera
+            user_new  = get_user_by_full_name(responsible_technician)
+            
+            # Validando se o tecnico esta tentando transferir para si mesmo o chamado
+            if user_new and user_current and user_new.username == user_current.username:
+                return 302, "Metodologia desconhecida para transferir o chamado a alguém que já é responsável por ele.", ""
+            
+            # caso for identificado que é o mesmo usuario a menssagem sera que o proprio tecnico atendeu
+            if user_new and username == user_new.username:
+                ticket.chat += f"[[Date:{date}],[System: {responsible_technician} atendeu ao Chamado],[Hours:{hours}]],"
+            # caso contrario mostrará que foi transferido
+            else:
+                # Se já houver mensagens no chat, adiciona um registro informando a transferência do chamado
+                ticket.chat += f"[[Date:{date}],[System: {technician} transferiu o Chamado para {responsible_technician}],[Hours:{hours}]],"
 
         # Atualiza o técnico responsável e o e-mail associado ao chamado
         ticket.responsible_technician = responsible_technician
@@ -1192,8 +1204,6 @@ def updating_chat_change_sender(
     # Salva as alterações no banco de dados
     ticket.save()
     
-    print(ticket.chat)
-
     # Inicia uma nova thread para verificar notificações de chamada
     Thread(target=verify_notification_call, args=(ticket,)).start()
 
@@ -1224,7 +1234,7 @@ def update_last_sender(ticket: SupportTicket, user: str, date: str, hours: str):
                 ticket.last_sender = f"{user}, {date} {hours}"
         except ValueError:
             # Exibe erro caso a conversão da data falhe, mantendo 'last_sender' inalterado
-            print("Erro ao converter a data, mantendo last_sender inalterado.")
+            logger.error("Erro ao converter a data, mantendo last_sender inalterado.")
     else:
         # Se 'last_sender' não estiver definido, atribui o valor inicial
         ticket.last_sender = f"{user}, {date} {hours}"
@@ -1232,13 +1242,15 @@ def update_last_sender(ticket: SupportTicket, user: str, date: str, hours: str):
     ticket.save()
 
 
-def process_ticket_files(ticket_id):
+def process_ticket_files(ticket):
     """Processa arquivos anexados ao chamado e retorna listas organizadas"""
+    logger.info(ticket)
     image_data = []
     content_file = []
     name_file = []
 
     ticket_files = TicketFile.objects.filter(ticket=ticket)
+
     mime = Magic()
 
     for tf in ticket_files:
@@ -1293,7 +1305,6 @@ def process_ticket_files(ticket_id):
                         break
 
     return image_data, content_file, name_file
-
 
 @never_cache
 @require_GET
@@ -1351,7 +1362,7 @@ def get_ticket_filter(
 
         if url == "dashboards":
             # Inicializa o filtro principal vazio caso seja algum tecnico
-            if request.user.groups.filter(name__in=[Back_Tech, Back_Leader]).exists():
+            if request.user.groups.filter(name__in=[group_tech]).exists():
                 filters = Q()
         elif url == "history":
             # Inicializa o filtro principal obrigando a busca pelo "ticketRequester"
@@ -1478,7 +1489,7 @@ def equipaments_for_alocate(request, location):
     try:
         with get_database_connection() as connection:
             with connection.cursor() as cursor:
-                query = "SELECT * FROM SUA_TABELA WHERE COLUNA = 0 AND OUTRA_COLUNA = %s"
+                query = "SELECT * FROM machines WHERE alocate = 0 AND location = %s"
                 cursor.execute(query, (location, ))
                 result = cursor.fetchall()
                 results_list = [
@@ -1676,7 +1687,6 @@ def verify_names(name_verify, responsible_technician):
     # Retorna False caso não haja nome a ser verificado ou nome do técnico responsável
     return False
 
-
 def verify_notification_call(ticket):
     try:
         if not TicketMail.objects.filter(ticket=ticket).exists():
@@ -1685,7 +1695,6 @@ def verify_notification_call(ticket):
                 send_date=datetime.now()
             )
             new_ticket.save()  # Salva o chamado no banco de dados
-            logger.info("criado novo")
         return
 
     except Exception as e:
@@ -1693,12 +1702,13 @@ def verify_notification_call(ticket):
         # return logger.error(f"Erro ao verificar o chamado {id}: {e}")
         return logger.error(e)
 
+
 @require_GET
 def get_image(request, mac):
     try:
         with get_database_connection() as connection:  # 🔹 Agora usa 'with'
             cursor = connection.cursor()
-            query = "SELECT COLUNA FROM SUA_TABELA WHERE SUA_KEY = %s;"
+            query = "SELECT model FROM machines WHERE mac_address = %s;"
             cursor.execute(query, (mac,))
             result = cursor.fetchone()
             cursor.close()

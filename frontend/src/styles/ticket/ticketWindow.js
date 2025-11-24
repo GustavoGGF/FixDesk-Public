@@ -212,15 +212,6 @@ export const DivImageOpen = styled.div`
   -webkit-background-color: transparent; /* Adicionado para compatibilidade com navegadores baseados em WebKit */
 `;
 
-export const BtnOpen = styled.button`
-  background: transparent;
-  border: none;
-  margin: 0.2em;
-  -webkit-background: transparent; /* Adicionado para compatibilidade com navegadores baseados em WebKit */
-  -webkit-border: none; /* Adicionado para compatibilidade com navegadores baseados em WebKit */
-  -webkit-margin: 0.2em; /* Adicionado para compatibilidade com navegadores baseados em WebKit */
-`;
-
 export const ImageOpen = styled.img`
   max-width: 70% !important;
 `;
@@ -264,10 +255,10 @@ export const DivOnBoardFile = styled.div`
   -webkit-display: flex; /* Adicionado para compatibilidade com navegadores baseados em WebKit */
   -webkit-justify-content: center; /* Adicionado para compatibilidade com navegadores baseados em WebKit */
   -webkit-flex-direction: column; /* Adicionado para compatibilidade com navegadores baseados em WebKit */
+  width: 15em;
 `;
 
 export const IMGFiles = styled.img`
-  width: 4em;
   height: 4em;
   border-radius: 0.4em;
   transition: 0.7s;
@@ -276,7 +267,6 @@ export const IMGFiles = styled.img`
   }
   margin: 0 auto;
   cursor: pointer !important;
-  -webkit-width: 4em; /* Adicionado para compatibilidade com navegadores baseados em WebKit */
   -webkit-height: 4em; /* Adicionado para compatibilidade com navegadores baseados em WebKit */
   -webkit-border-radius: 0.4em;
   -webkit-transition: 0.7s; /* Adicionado para compatibilidade com navegadores baseados em WebKit */

@@ -11,9 +11,7 @@ import {
   DivCard,
   H5Card,
   SpanCard,
-  Table,
   TD,
-  TH,
   TR,
   TRSPACE,
   DivZ,
@@ -25,6 +23,7 @@ import FilterTickets from "../components/ticket/filter";
 import { TicketContext } from "../context/TicketContext";
 import { MessageContext } from "../context/MessageContext";
 import OpenTicketWindow from "../components/ticket/openTicketWindow";
+import ListTable from "../components/table/ListTable";
 
 export default function History() {
   useEffect(() => {
@@ -107,7 +106,6 @@ export default function History() {
   const [fetchchat, setFetchChat] = useState(false);
   const [inCard, setInCard] = useState(false);
   const [inList, setInList] = useState(false);
-  const [navbar, setNavbar] = useState(false);
   const [btnMore, setBtnMore] = useState(false);
   const [ticketWindow, setTicketWindow] = useState(false);
   const [showEquipament, setShowEquipament] = useState(false);
@@ -125,6 +123,7 @@ export default function History() {
   let colorBorder = "";
 
   const dashBoard = useRef(null);
+  const timeoutTicketUpdateRef = useRef(null);
 
   const {
     ticketData,
@@ -135,9 +134,19 @@ export default function History() {
     setCardOrList,
     filterHistory,
     setFilterHistory,
+    ticketIDOpen,
+    setTicketIDOpen,
+    setTicketList
   } = useContext(TicketContext);
-  const { setTypeError, setMessageError, setMessage, message } =
+  const { typeError, messageError, setMessage, message } =
     useContext(MessageContext);
+
+  useEffect(() => {
+    if (ticketIDOpen && ticketIDOpen !== "") {
+      HelpdeskPage({ id: ticketIDOpen });
+      setTicketIDOpen("");
+    }
+  }, [ticketIDOpen]);
 
   useEffect(() => {
     if (cardOrList && cardOrList.length !== 0) {
@@ -179,6 +188,7 @@ export default function History() {
   useEffect(() => {
     // Função assíncrona para buscar e processar os dados necessários ao iniciar o componente
     const fetchData = async () => {
+      setTicketList([])
       try {
         // Obtém os dados armazenados localmente no navegador (localStorage)
         const dataInfo = JSON.parse(localStorage.getItem("dataInfo"));
@@ -244,10 +254,9 @@ export default function History() {
         const data = await response.json();
         // Verifica se não há tickets e define mensagens de erro informativas para o usuário
         if (data.tickets.length === 0) {
-          setTypeError("Falta de Dados");
-          setMessageError("Você Ainda não abriu nenhum chamado");
+          typeError.current = "Falta de Dados";
+          messageError.current = "Você Ainda não abriu nenhum chamado";
           setMessage(true);
-          setNavbar(true);
         }
         // Atualiza os estados com os dados recebidos da API
         setToken(data.token);
@@ -256,8 +265,8 @@ export default function History() {
         setStatusFIlter(status_current);
       } catch (error) {
         // Em caso de erro, define mensagens de erro e exibe no console para depuração
-        setTypeError("Erro Fatal");
-        setMessageError(error.message || "Erro desconhecido");
+        typeError.current = "Erro Fatal";
+        messageError.current = (error.message || "Erro desconhecido");
         setMessage(true);
         console.error("Erro na solicitação:", error);
       }
@@ -305,7 +314,7 @@ export default function History() {
     fetch("/helpdesk/ticket/" + id, {
       method: "GET",
       headers: {
-        "X-CSRF-Token": token,
+        "X-CSRFToken": token,
         Accept: "application/json",
       },
     })
@@ -431,8 +440,8 @@ export default function History() {
         }
       })
       .catch((err) => {
-        setMessageError(err);
-        setTypeError("Fatal ERROR");
+        messageError.current = err;
+        typeError.current = "Fatal ERROR";
         setMessage(true);
         return console.log(err);
       });
@@ -458,21 +467,31 @@ export default function History() {
     return numero;
   }
 
+  /**
+   * Esta função monta dinamicamente um grupo de chamados em formato de card,
+   * ajusta a interface para o modo "card view" e no final ativa um loop para
+   * continuar atualizando os chamados mostrados. Também persiste a escolha
+   * de visualização no localStorage e modifica o estilo dos botões de seleção.
+   */
   function ViewCard() {
     try {
+      // Limpa o estado atual de tickets antes de renderizar novos
       setTickets([]);
-      setNavbar(true);
-      setInCard(true);
-      setInList(false);
+      setInCard(true); // Define a visualização como modo card
+      setInList(false); // Desativa o modo lista
 
+      // Armazena no localStorage que a view selecionada é "card"
       localStorage.setItem("selectView", "card");
 
+      // Ajusta estilos visuais do botão selecionado para indicar o modo ativo
       const btn = document.getElementById("select-view-card");
       btn.style.backgroundColor = "#00B4D8";
 
+      // Reseta o estilo do botão de lista
       const btn2 = document.getElementById("select-view-list");
       btn2.style.backgroundColor = "transparent";
 
+      // Itera sobre os chamados disponíveis para criar os cards
       ticketData.forEach((ticket) => {
         var date = new Date(ticket["start_date"]);
 
@@ -486,6 +505,7 @@ export default function History() {
 
         var newDate = dataFormatada + " " + horaFormatada;
 
+        // Define a cor da borda do card com base no status do chamado
         if (ticket["open"] === false) {
           colorBorder = "ticket-close";
         } else if (
@@ -493,9 +513,7 @@ export default function History() {
           ticket["responsible_technician"] === null
         ) {
           const currentDate = new Date();
-
           const diferenceMilisecond = currentDate - date;
-
           const diferenceDays = diferenceMilisecond / (1000 * 60 * 60 * 24);
 
           if (diferenceDays >= 7) {
@@ -512,6 +530,7 @@ export default function History() {
           colorBorder = "ticket-stop";
         }
 
+        // Monta o componente visual do card para o chamado
         const Div = (
           <DivCard
             className={`animate__animated animate__zoomInDown no-border ${colorBorder} ${themeCard} tickets_method`}
@@ -527,36 +546,52 @@ export default function History() {
           </DivCard>
         );
 
+        // Adiciona o card no estado que mantém a lista de tickets exibidos
         setTickets((ticketsDash) => [...ticketsDash, Div]);
+
+        // Ajusta a classe CSS do dashboard para garantir estilo do modo card
         const dash = document.getElementById("dashboard");
         dash.classList.add("dash-card");
 
+        // Exibe botão para carregar mais se a quantidade configurada for maior que 5
         if (localStorage.getItem("quantity") > 5) {
           setBtnMore(true);
         }
 
-        return ticketData;
+        // Inicia o loop para atualizar periodicamente os chamados exibidos
+        return CallNewTicket();
       });
     } catch (err) {
+      // Em caso de erro, faz o log para depuração
       return console.log(err);
     }
   }
 
+  /**
+   * Esta função monta dinamicamente um grupo de chamados em formato de lista (tabela),
+   * ajusta a interface para o modo "list view" e no final ativa um loop para
+   * continuar atualizando os chamados exibidos. Persiste também a escolha do modo
+   * no localStorage e atualiza o estilo dos botões para refletir a seleção.
+   */
   function ViewList() {
     try {
+      // Limpa o estado atual de tickets antes de renderizar novos
       setTickets([]);
-      setNavbar(true);
-      setInList(true);
-      setInCard(false);
+      setInList(true); // Define visualização como modo lista
+      setInCard(false); // Desativa o modo card
 
+      // Salva no localStorage que a view selecionada é "list"
       localStorage.setItem("selectView", "list");
 
+      // Ajusta estilos visuais do botão selecionado para indicar o modo ativo
       const btn = document.getElementById("select-view-list");
       btn.style.backgroundColor = "#00B4D8";
 
+      // Reseta o estilo do botão de card
       const btn2 = document.getElementById("select-view-card");
       btn2.style.backgroundColor = "transparent";
 
+      // Itera sobre os chamados disponíveis para criar linhas da tabela
       ticketData.forEach((ticket) => {
         var date = new Date(ticket["start_date"]);
 
@@ -570,6 +605,7 @@ export default function History() {
 
         const newDate = dataFormatada + " " + horaFormatada;
 
+        // Define a classe CSS da linha da tabela com base no status do chamado
         if (ticket["open"] === false) {
           colorBorder = "ticket-close-list";
         } else if (
@@ -577,9 +613,7 @@ export default function History() {
           ticket["responsible_technician"] === null
         ) {
           const currentDate = new Date();
-
           const diferenceMilisecond = currentDate - date;
-
           const diferenceDays = diferenceMilisecond / (1000 * 60 * 60 * 24);
 
           if (diferenceDays >= 7) {
@@ -595,6 +629,8 @@ export default function History() {
         } else if (ticket["open"] === null) {
           colorBorder = "ticket-stop-list";
         }
+
+        // Monta o elemento TR para representar o chamado como uma linha na tabela
         const Div = (
           <TR
             key={ticket["id"]}
@@ -611,22 +647,101 @@ export default function History() {
           </TR>
         );
 
+        // Linha de espaçamento para melhorar a leitura da tabela
         const Space = <TRSPACE></TRSPACE>;
 
-        setTickets((ticketsDash) => [...ticketsDash, Div]); // Adiciona o cartão ao array de chamados.
+        // Adiciona a linha e o espaço ao array de tickets
+        setTickets((ticketsDash) => [...ticketsDash, Div]);
         setTickets((ticketsDash) => [...ticketsDash, Space]);
+
+        // Remove classe do modo card para garantir que tabela fique estilizada corretamente
         const dash = document.getElementById("dashboard");
         dash.classList.remove("dash-card");
 
+        // Exibe botão para carregar mais se configurado no localStorage
         if (localStorage.getItem("quantity") > 5) {
           setBtnMore(true);
         }
 
-        return ticketData;
+        // Inicia o loop para continuar atualizando periodicamente os chamados exibidos
+        return CallNewTicket();
       });
     } catch (err) {
+      // Loga o erro caso algo falhe no processo
       return console.log();
     }
+  }
+
+  /**
+   * Esta função atua como um loop controlado via setTimeout para consultar
+   * novos chamados a cada 60 segundos, garantindo que não existam timeouts
+   * concorrentes. Utiliza uma referência para armazenar o identificador do
+   * timeout, permitindo o cancelamento seguro e evitando múltiplas execuções paralelas.
+   */
+  function CallNewTicket() {
+    try {
+      // Se existir um timeout já configurado, cancela antes de agendar outro
+      if (timeoutTicketUpdateRef.current) {
+        clearTimeout(timeoutTicketUpdateRef.current);
+      }
+
+      // Configura um novo timeout para executar após 60 segundos
+      timeoutTicketUpdateRef.current = setTimeout(() => {
+        // Chama a função responsável por buscar novos chamados
+        GetNewTickets();
+
+        // Após execução, limpa o identificador do timeout para indicar inatividade
+        timeoutTicketUpdateRef.current = null;
+      }, 60000);
+    } catch (err) {
+      // Loga qualquer erro ocorrido durante o processo para facilitar debug
+      return console.log(err);
+    }
+  }
+
+  /**
+   * Esta função realiza uma requisição HTTP GET para buscar novos chamados
+   * de acordo com os filtros armazenados no localStorage (quantity, status e order).
+   * Após obter a resposta em JSON, atualiza o estado local com os dados dos chamados.
+   * Em caso de falha, trata o erro exibindo mensagens apropriadas e faz o log no console.
+   */
+  function GetNewTickets() {
+    setTicketList([])
+    // Recupera os filtros armazenados no localStorage para definir os parâmetros da requisição
+    var quantity = localStorage.getItem("quantity");
+    var status = localStorage.getItem("status");
+    var order = localStorage.getItem("order");
+
+    // Realiza a requisição GET para a rota 'helpdesk/get-ticket/' com os filtros como parâmetros de path
+    fetch(
+      "/helpdesk/get-ticket/" +
+        quantity +
+        "/" +
+        Data.name +
+        "/" +
+        status +
+        "/" +
+        order,
+      {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      }
+    )
+      .then((response) => {
+        // Converte a resposta para JSON
+        return response.json();
+      })
+      .then((data) => {
+        // Atualiza o estado local com a lista de chamados retornados
+        setTicketData(data.tickets);
+      })
+      .catch((err) => {
+        // Em caso de erro, define mensagens de erro específicas e loga o erro no console
+        typeError.current = "FATAL ERROR";
+        messageError.current = err;
+        setMessage(true);
+        return console.log(err);
+      });
   }
 
   const handleAnimationEnd = useCallback((event) => {
@@ -684,7 +799,7 @@ export default function History() {
       setChat(false);
       setShowEquipament(false);
       setMountInitialChat([]);
-      return;
+      return GetNewTickets();
     } catch (err) {
       return console.log(err);
     }
@@ -692,11 +807,9 @@ export default function History() {
 
   return (
     <Div className={theme}>
-      {navbar && (
-        <div className={blurNav}>
-          <Navbar Name={Data.name} JobTitle={Data.job_title} />
-        </div>
-      )}
+      <div className={blurNav}>
+        <Navbar />
+      </div>
       {message && (
         <DivZ className="position-fixed top-50 start-50 translate-middle z-3">
           <Message
@@ -719,18 +832,11 @@ export default function History() {
         userName={Data.name}
         moreTickets={moreTickets}
       />
-      <section ref={dashBoard} id="dashboard">
+      <section className="mt-3" ref={dashBoard} id="dashboard">
         {inList && (
-          <Table className="container">
-            <thead className="cla">
-              <TH className={colorTheme}>Chamado</TH>
-              <TH className={colorTheme}>Usuario</TH>
-              <TH className={colorTheme}>Ocorrencia</TH>
-              <TH className={colorTheme}>Descrição</TH>
-              <TH className={colorTheme}>Data Abertura</TH>
-            </thead>
-            <tbody>{tickets}</tbody>
-          </Table>
+          <div className="w-100 d-flex justify-content-center">
+            <ListTable ticket={ticketData} />
+          </div>
         )}
         {inCard && <>{tickets}</>}
       </section>
@@ -767,7 +873,7 @@ export default function History() {
         />
       )}
       {btnMore && (
-        <div className={`w-100 text-center ${blurNav}`}>
+        <div className={`w-100 text-center mt-5 ${blurNav}`}>
           <button
             className="btn btn-info mb-5"
             onClick={() => {

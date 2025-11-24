@@ -22,7 +22,7 @@ import { MessageContext } from "../../context/MessageContext";
 export default function Message({ CloseMessage }) {
   const { typeError, messageError } = useContext(MessageContext);
   return (
-    <Div className="card border-danger mb-3 position-relative">
+    <Div className="card border-danger mb-3 position-relative mt-5">
       <Button className="position-absolute top-0 end-0 mt-1" onClick={CloseMessage}>
         <IMG src={CloseBTN} alt="" />
       </Button>

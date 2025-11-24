@@ -2,6 +2,7 @@ import React, { useRef, useState, useContext, useEffect } from "react";
 import {
   Select,
   DivMachine,
+  Contract,
   ImgMachines,
 } from "../../styles/ticketsOptionsStyle";
 import Close from "../../images/components/close.png";
@@ -26,25 +27,27 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
   const [dateequip, setDateEquip] = useState(false);
   const [dadosCase, setDados] = useState(false);
   const [softAPP, setSoftAPP] = useState(false);
+  const [comodato, setComodato] = useState(false);
   const [loadingoFetchingEquipaments, setLoadingoFetchingEquipaments] =
     useState(true);
 
   const {
-    setMessagetitle,
-    setRespectiveArea,
+    messagetitle,
+    respectiveArea,
     setAlert,
-    setMessageinfo2,
-    setMachineAlocate,
+    messageinfo2,
+    messageinfo3,
+    machineAlocate,
     alocate_machine_acess,
-    setMessageinfo1,
-    setSelectedDay,
-    setSector,
-    setOccurrence,
-    setProblemn,
+    messageinfo1,
+    selectedDay,
+    sector,
+    occurrence,
+    problemn,
     setAlertVerify,
     reset,
     setReset,
-    setLinkAcess,
+    linkAcess,
   } = useContext(OptionsContext);
 
   const [selectedInternal, setSelectedInternal] = useState([]);
@@ -86,7 +89,7 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
       setAlert(false);
       setUser(false);
       setAlertVerify(false);
-      setSector(false);
+      sector.current = "";
       setSystem(false);
       setSYS(false);
       setSYS2(false);
@@ -96,7 +99,8 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
       setReset(false);
       setSoftAPP(false);
       setDados(false);
-      setLinkAcess("");
+      setComodato(false);
+      linkAcess.current = "";
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reset]);
@@ -107,7 +111,7 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
     if (selectedValue === "TI") {
       setAlert(false);
       setRespectiveTI(true);
-      setRespectiveArea("TI");
+      respectiveArea.current  = "TI";
       setAlertVerify(false);
     } else {
       setRespectiveTI(false);
@@ -125,7 +129,7 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
     alert = false,
     user = false,
     alertVerify = false,
-    sector = "",
+    sectorValue = "",
     system = false,
     sys = false,
     sys2 = false,
@@ -141,7 +145,7 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
     setAlert(alert);
     setUser(user);
     setAlertVerify(alertVerify);
-    setSector(sector);
+    sector.current = sectorValue;
     setSystem(system);
     setSYS(sys);
     setSYS2(sys2);
@@ -157,10 +161,10 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
       default:
         break;
       case "infra":
-        UpdateOccurrence({ infra: true, sector: "Infraestrutura" });
+        UpdateOccurrence({ infra: true, sectorValue: "Infraestrutura" });
         break;
       case "sistema":
-        UpdateOccurrence({ system: true, sector: "Sistema" });
+        UpdateOccurrence({ system: true, sectorValue: "Sistema" });
         break;
       case "none":
         break;
@@ -176,14 +180,14 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
     alert = false,
     user = false,
     alertVerify = false,
-    occurrence = "",
+    occurrenceValue = "",
     sys = false,
     sys2 = false,
     alocate = false,
     dateEquip = false,
     dados = false,
     softApp = false,
-    linkAcess = "",
+    linkAcessValue = "",
   }) {
     setBackup(backup);
     setMail(mail);
@@ -193,14 +197,14 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
     setAlert(alert);
     setUser(user);
     setAlertVerify(alertVerify);
-    setOccurrence(occurrence);
+    occurrence.current = occurrenceValue;
     setSYS(sys);
     setSYS2(sys2);
     setAlocate(alocate);
     setDateEquip(dateEquip);
     setDados(dados);
     setSoftAPP(softApp);
-    setLinkAcess(linkAcess);
+    linkAcess.current = linkAcessValue;
   }
 
   function SelectProblem() {
@@ -211,48 +215,48 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
       default:
         break;
       case "backup":
-        UpdateProblemn({ backup: true, occurrence: "Backup" });
+        UpdateProblemn({ backup: true, occurrenceValue: "Backup" });
         break;
       case "mail":
-        UpdateProblemn({ mail: true, occurrence: "E-mail" });
+        UpdateProblemn({ mail: true, occurrenceValue: "E-mail" });
         break;
       case "equip":
-        UpdateProblemn({ equip: true, occurrence: "Equipamento" });
+        UpdateProblemn({ equip: true, occurrenceValue: "Equipamento" });
         break;
       case "user":
-        UpdateProblemn({ user: true, occurrence: "Gerenciamento de Usuario" });
+        UpdateProblemn({ user: true, occurrenceValue: "Gerenciamento de Usuario" });
         break;
       case "internet":
-        UpdateProblemn({ internet: true, occurrence: "Internet" });
+        UpdateProblemn({ internet: true, occurrenceValue: "Internet" });
         break;
       case "folder":
-        UpdateProblemn({ folder: true, occurrence: "Permissão" });
+        UpdateProblemn({ folder: true, occurrenceValue: "Permissão" });
         break;
       case "none":
         break;
       case "sap":
-        UpdateProblemn({ sys: true, occurrence: "SAP" });
+        UpdateProblemn({ sys: true, occurrenceValue: "SAP" });
         break;
       case "mbi":
-        UpdateProblemn({ sys: true, occurrence: "MBI" });
+        UpdateProblemn({ sys: true, occurrenceValue: "MBI" });
         break;
       case "synch":
-        UpdateProblemn({ sys: true, occurrence: "Synchro" });
+        UpdateProblemn({ sys: true, occurrenceValue: "Synchro" });
         break;
       case "office":
-        UpdateProblemn({ sys2: true, occurrence: "Office" });
+        UpdateProblemn({ sys2: true, occurrenceValue: "Office" });
         break;
       case "eng":
-        UpdateProblemn({ sys2: true, occurrence: "Softwares de Eng" });
+        UpdateProblemn({ sys2: true, occurrenceValue: "Softwares de Eng" });
         break;
       case "soft":
-        UpdateProblemn({ softApp: true, occurrence: "Novo SoftWare" });
+        UpdateProblemn({ softApp: true, occurrenceValue: "Novo SoftWare" });
         break;
       case "dados":
-        UpdateProblemn({ dados: true, occurrence: "Integridade de Dados" });
+        UpdateProblemn({ dados: true, occurrenceValue: "Integridade de Dados" });
         break;
       case "metadados":
-        UpdateProblemn({ sys: true, occurrence: "Metadados" });
+        UpdateProblemn({ sys: true, occurrenceValue: "Metadados" });
         break;
     }
   }
@@ -266,20 +270,20 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
         break;
       case "pasta":
         setAlert(true);
-        setMessagetitle("Caso de pasta");
-        setMessageinfo1("1. Informar o caminho completo da pasta");
-        setMessageinfo2(
-          "2. Informar a dataUser de criação e exclusão do arquivo"
-        );
-        setProblemn("Restaurar pasta");
+        messagetitle.current = "Caso de pasta";
+        messageinfo1.current = "1. Informar o caminho completo da pasta";
+        messageinfo2.current = "2. Informar a dataUser de criação e exclusão do arquivo";
+        messageinfo3.current = "";
+        problemn.current = "Restaurar pasta";
         setAlertVerify(false);
         break;
       case "mail":
         setAlert(true);
-        setMessagetitle("Caso de e-mail");
-        setMessageinfo1("1. Descreva o que deseja restaurar");
-        setMessageinfo2("");
-        setProblemn("Restaurar e-mail");
+        messagetitle.current =  "Caso de e-mail";
+        messageinfo1.current = "1. Descreva o que deseja restaurar";
+        messageinfo2.current =  "";
+        messageinfo3.current = "";
+        problemn.current = "Restaurar e-mail";
         setAlertVerify(false);
 
         break;
@@ -298,15 +302,16 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
         break;
       case "maxcap":
         setAlert(false);
-        setProblemn("Aumentar capacidade de e-mail");
+        problemn.current = "Aumentar capacidade de e-mail";
         setAlertVerify(false);
         break;
       case "conect":
         setAlert(true);
-        setMessagetitle("Caso de email não conecta na internet");
-        setMessageinfo1("1. Informar mensagem de erro");
-        setMessageinfo2("");
-        setProblemn("Problema com conexão");
+        messagetitle.current = "Caso de email não conecta na internet";
+        messageinfo1.current = "1. Informar mensagem de erro";
+        messageinfo2.current = "";
+        messageinfo3.current = "";
+        problemn.current = "Problema com conexão";
         setAlertVerify(false);
         break;
       case "none":
@@ -314,10 +319,11 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
         break;
       case "domin":
         setAlert(true);
-        setMessagetitle("Caso de liberar domínion de e-mail");
-        setMessageinfo1("1. Informar dóminio, exemplo @lupatech.com.br");
-        setMessageinfo2("");
-        setProblemn("Liberar domínio");
+        messagetitle.current = "Caso de liberar domínion de e-mail";
+        messageinfo1.current = "1. Informar dóminio, exemplo @lupatech.com.br";
+        messageinfo2.current = "";
+        messageinfo3.current = "";
+        problemn.current = "Liberar domínio";
         setAlertVerify(false);
         break;
     }
@@ -333,43 +339,39 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
       case "off":
         setAlocate(false);
         setAlert(true);
-        setMessagetitle("Caso de computador não ligar");
-        setMessageinfo1(
-          "1. Informar o usuario e setor de onde fica o equipamento"
-        );
-        setMessageinfo2("");
-        setProblemn("Equipamento não liga");
+        messagetitle.current = "Caso de computador não ligar";
+        messageinfo1.current = "1. Informar o usuario e setor de onde fica o equipamento";
+        messageinfo2.current = "";
+        messageinfo3.current = "";
+        problemn.current = "Equipamento não liga";
         setAlertVerify(false);
         break;
       case "printer":
         setAlocate(false);
         setAlert(true);
-        setMessagetitle("Caso de problema com a impressora");
-        setMessageinfo1("1. Informar onde a impressora está localizada");
-        setMessageinfo2("2. Informar menssagem de erro que aparece");
-        setProblemn("Problema com a impressora");
+        messagetitle.current = "Caso de problema com a impressora";
+        messageinfo1.current = "1. Informar onde a impressora está localizada";
+        messageinfo2.current = "2. Informar menssagem de erro que aparece";
+        problemn.current = "Problema com a impressora";
         setAlertVerify(false);
         break;
       case "roaming":
         setAlocate(false);
         setAlert(true);
-        setMessagetitle("Caso de troca de local de trabalho");
-        setMessageinfo1(
-          "1. Informar se no local existe ponto de rede e de energia"
-        );
-        setMessageinfo2("");
-        setProblemn("Mudanca de local de trabalho");
+        messagetitle.current = "Caso de troca de local de trabalho";
+        messageinfo1.current = "1. Informar se no local existe ponto de rede e de energia";
+        messageinfo2.current = "";
+        messageinfo3.current = "";
+        problemn.current = "Mudanca de local de trabalho";
         setAlertVerify(false);
         break;
       case "usb":
         setAlocate(false);
         setAlert(true);
-        setMessagetitle("Caso de liberação/bloqueio de USB");
-        setMessageinfo1("1. Justificar a solicitação");
-        setMessageinfo2(
-          "2. Caso não seja o gestor da area, anexar a autorização do mesmo"
-        );
-        setProblemn("USB");
+        messagetitle.current = "Caso de liberação/bloqueio de USB";
+        messageinfo1.current = "1. Justificar a solicitação";
+        messageinfo2.current = "2. Caso não seja o gestor da area, anexar a autorização do mesmo";
+        problemn.current = "USB";
         setAlertVerify(false);
         break;
       case "none":
@@ -381,24 +383,22 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
         setEquipaments("");
         setDashEquipamentSelected("");
         setAlert(true);
-        setMessagetitle("Caso de Alocação de equipamento");
-        setMessageinfo1("1. Selecionar o equipamento desejado");
-        setMessageinfo2(
-          "2. Informar a dataUser e a necessidade de equipamentos adicionais como teclado, etc..."
-        );
+        messagetitle.current = "Caso de Alocação de equipamento";
+        messageinfo1.current = "1. Selecionar o equipamento desejado";
+        messageinfo2.current = "2. Informar a dataUser e a necessidade de equipamentos adicionais como teclado, etc...";
         setAlertVerify(false);
         setAlocate(true);
         setLoadingoFetchingEquipaments(true);
         setDisabledDates([]);
         setSelectedInternal([]);
-        setProblemn("Alocação de Máquina");
+        problemn.current = "Alocação de Máquina";
         break;
       case "change":
         setAlert(true);
-        setMessagetitle("Caso de Troca de Equipamento");
-        setMessageinfo1("1. Informar o Equipamento");
-        setMessageinfo2("2. Justificar o motivo da troca");
-        setProblemn("Trocar Equipamento");
+        messagetitle.current = "Caso de Troca de Equipamento";
+        messageinfo1.current = "1. Informar o Equipamento";
+        messageinfo2.current = "2. Justificar o motivo da troca";
+        problemn.current = "Trocar Equipamento";
         setAlertVerify(false);
         break;
     }
@@ -420,7 +420,7 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
             }}
           >
             <ImgMachines
-              src={`https://endreço-do.seu-servidor.com.br/que/disponibiliza/a-imagem/${element.model}`}
+              src={`https://techmind.lupatech.com.br/home/computers/get-image/${element.model}`}
               className="img-fluid"
               alt={`imagem ${element.model}`}
             />
@@ -457,7 +457,7 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
         }}
       >
         <ImgMachines
-          src={`https://endreço-do.seu-servidor.com.br/que/disponibiliza/a-imagem/${foundEquipament.model}`}
+          src={`https://techmind.lupatech.com.br/home/computers/get-image/${foundEquipament.model}`}
           className="img-fluid"
           alt={`imagem ${foundEquipament.model}`}
         />
@@ -494,19 +494,16 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
         console.log(err);
       });
     setLoadingoFetchingEquipaments(false);
-    setMachineAlocate(mac);
+    machineAlocate.current = mac;
   }
 
   function SelectUser() {
-    setProblemn("Criacao/Exclusão de usuario de rede");
-    setMessagetitle("Caso de Criar/Excluir Usuario");
-    setMessageinfo1("1. Acessar: ");
-    setLinkAcess(
-      "https://seu.servidor.com/que/tem-disponivel/seus/formularios-internos.aspx"
-    );
-    setMessageinfo2(
-      "2. No link a cima escolher seguinte opção: Fomulários de TI"
-    );
+    problemn.current = "Criacao/Exclusão de usuario de rede";
+    messagetitle.current = "Caso de Criar/Excluir Usuario";
+    messageinfo1.current = "1. Acessar: ";
+    linkAcess.current = "https://tilupatech.sharepoint.com/sites/Intranet/SitePages/Formul%C3%A1rios-Internos-LUPATECH-S-A.aspx";
+    messageinfo2.current = "2. No link a cima escolher seguinte opção: Fomulários de TI.";
+    messageinfo3.current = "3. Abrir o chamado após preencher o formulário.";
     setAlert(true);
     setAlertVerify(false);
   }
@@ -520,29 +517,26 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
         break;
       case "lib":
         setAlert(true);
-        setMessagetitle("Caso de liberação de site");
-        setMessageinfo1("1. Informar o link completo do site");
-        setMessageinfo2(
-          "2.Caso não seja o gestor da area, anexar a autorização do mesmo"
-        );
-        setProblemn("Liberacao de site");
+        messagetitle.current = "Caso de liberação de site";
+        messageinfo1.current = "1. Informar o link completo do site";
+        messageinfo2.current = "2.Caso não seja o gestor da area, anexar a autorização do mesmo";
+        problemn.current = "Liberacao de site";
         setAlertVerify(false);
         break;
       case "block":
         setAlert(true);
-        setMessagetitle("Caso de bloqueio de site");
-        setMessageinfo1("1. Informar o link completo do site");
-        setMessageinfo2(
-          "2.Caso não seja o gestor da area, anexar a autorização do mesmo"
-        );
-        setProblemn("Bloqueio de site");
+        messagetitle.current = "Caso de bloqueio de site";
+        messageinfo1.current = "1. Informar o link completo do site";
+        messageinfo2.current = "2.Caso não seja o gestor da area, anexar a autorização do mesmo"
+        problemn.current = "Bloqueio de site";
         setAlertVerify(false);
         break;
       case "none":
         setAlert(false);
-        setMessagetitle("");
-        setMessageinfo1("");
-        setMessageinfo2("");
+        messagetitle.current = "";
+        messageinfo1.current = "";
+        messageinfo2.current = "";
+        messageinfo3.current = "";
         break;
     }
   }
@@ -556,29 +550,26 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
         break;
       case "lib":
         setAlert(true);
-        setMessagetitle("Caso de liberação de pasta");
-        setMessageinfo1("1. Informar o diretorio completo da pasta");
-        setMessageinfo2(
-          "2.Caso não seja o gestor responsavel pela pasta, anexar a autorização do mesmo"
-        );
-        setProblemn("Liberar pasta");
+        messagetitle.current = "Caso de liberação de pasta";
+        messageinfo1.current = "1. Informar o diretorio completo da pasta";
+        messageinfo2.current = "2.Caso não seja o gestor responsavel pela pasta, anexar a autorização do mesmo";
+        problemn.current = "Liberar pasta";
         setAlertVerify(false);
         break;
       case "block":
         setAlert(true);
-        setMessagetitle("Caso de bloqueio de pasta");
-        setMessageinfo1("1. Informar o diretorio completo da pasta");
-        setMessageinfo2(
-          "2.Caso não seja o gestor responsavel pela pasta, anexar a autorização do mesmo"
-        );
-        setProblemn("Bloquear pasta");
+        messagetitle.current = "Caso de bloqueio de pasta";
+        messageinfo1.current = "1. Informar o diretorio completo da pasta";
+        messageinfo2.current = "2.Caso não seja o gestor responsavel pela pasta, anexar a autorização do mesmo";
+        problemn.current = "Bloquear pasta";
         setAlertVerify(false);
         break;
       case "none":
         setAlert(false);
-        setMessagetitle("");
-        setMessageinfo1("");
-        setMessageinfo2("");
+        messagetitle.current = "";
+        messageinfo1.current = "";
+        messageinfo2.current = "";
+        messageinfo3.current = "";
         break;
     }
   }
@@ -591,44 +582,46 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
       default:
         break;
       case "user":
-        setMessagetitle("Caso de Criação/exclusão de usuários");
-        setMessageinfo1(
-          "1. Informar o usuário que deverá ser criado ou excluido"
-        );
-        setMessageinfo2("2. Informar os acessos que o mesmo poderá utilizar");
-        setProblemn("Criação/exclusão usuário");
+        messagetitle.current = "Caso de Criação/exclusão de usuários";
+        messageinfo1.current = "1. Informar o usuário que deverá ser criado ou excluido"
+        messageinfo2.current = "2. Informar os acessos que o mesmo poderá utilizar";
+        problemn.current = "Criação/exclusão usuário";
         setAlert(true);
         setAlertVerify(false);
         break;
       case "access":
-        setMessagetitle("Caso de Liberação/bloqueio de acessos");
-        setMessageinfo1("1. Descreva o que deseja bloquear e/ou liberar");
-        setMessageinfo2("");
-        setProblemn("Liberação/bloqueio de acessos");
+        messagetitle.current = "Caso de Liberação/bloqueio de acessos";
+        messageinfo1.current = "1. Descreva o que deseja bloquear e/ou liberar";
+        messageinfo2.current = "";
+        messageinfo3.current = "";
+        problemn.current = "Liberação/bloqueio de acessos";
         setAlert(true);
         setAlertVerify(false);
         break;
       case "quest":
-        setMessagetitle("Caso de Dúvidas operacionais");
-        setMessageinfo1("1. Descreva o que deseja saber");
-        setMessageinfo2("");
-        setProblemn("Dúvidas operacionais");
+        messagetitle.current = "Caso de Dúvidas operacionais";
+        messageinfo1.current = "1. Descreva o que deseja saber";
+        messageinfo2.current = "";
+        messageinfo3.current = "";
+        problemn.current = "Dúvidas operacionais";
         setAlertVerify(false);
         setAlert(true);
         break;
       case "error":
-        setMessagetitle("Caso de Correção de falhas");
-        setMessageinfo1("1. Informe o Erro");
-        setMessageinfo2("");
-        setProblemn("Correção de falhas");
+        messagetitle.current = "Caso de Correção de falhas";
+        messageinfo1.current = "1. Informe o Erro";
+        messageinfo2.current = "";
+        messageinfo3.current = "";
+        problemn.current = "Correção de falhas";
         setAlertVerify(false);
         setAlert(true);
         break;
       case "upg":
-        setMessagetitle("Caso de Melhorias");
-        setMessageinfo1("1. Informe a melhoria que deseja implementar");
-        setMessageinfo2("");
-        setProblemn("Melhoria");
+        messagetitle.current = "Caso de Melhorias";
+        messageinfo1.current = "1. Informe a melhoria que deseja implementar";
+        messageinfo2.current = "";
+        messageinfo3.current = "";
+        problemn.current = "Melhoria";
         setAlertVerify(false);
         setAlert(true);
         break;
@@ -646,18 +639,19 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
         break;
       case "buy":
         setAlert(true);
-        setMessagetitle("Aquisição de software/licenciamento");
-        setMessageinfo1("1. Informe para quem será a licença");
-        setMessageinfo2("");
-        setProblemn("Aquisição de software/licenciamento");
+        messagetitle.current = "Aquisição de software/licenciamento";
+        messageinfo1.current = "1. Informe para quem será a licença";
+        messageinfo3.current = "";
+        problemn.current = "Aquisição de software/licenciamento";
         setAlertVerify(false);
         break;
       case "error":
         setAlert(true);
-        setMessagetitle("Caso de Correção de falhas");
-        setMessageinfo1("1. Informe o Erro");
-        setMessageinfo2("");
-        setProblemn("Correção de falhas");
+        messagetitle.current = "Caso de Correção de falhas";
+        messageinfo1.current = "1. Informe o Erro";
+        messageinfo2.current = "";
+        messageinfo3.current = "";
+        problemn.current = "Correção de falhas";
         setAlertVerify(false);
         break;
       case "none":
@@ -675,10 +669,11 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
         break;
       case "install":
         setAlert(true);
-        setMessagetitle("Instalação de Novo Software");
-        setMessageinfo1("1. Informar nome do Software");
-        setMessageinfo2("");
-        setProblemn("Instalação de Novo Software");
+        messagetitle.current = "Instalação de Novo Software";
+        messageinfo1.current = "1. Informar nome do Software";
+        messageinfo2.current = "";
+        messageinfo3.current = "";
+        problemn.current = "Instalação de Novo Software";
         setAlertVerify(false);
         break;
       case "none":
@@ -686,10 +681,10 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
         break;
       case "error":
         setAlert(true);
-        setMessagetitle("Erro e Problema em Software gerais");
-        setMessageinfo1("1. Informar nome do Software");
-        setMessageinfo2("2. Informar o erro");
-        setProblemn("Erro e Problema em Software gerais");
+        messagetitle.current = "Erro e Problema em Software gerais";
+        messageinfo1.current = "1. Informar nome do Software";
+        messageinfo2.current = "2. Informar o erro";
+        problemn.current = "Erro e Problema em Software gerais";
         setAlertVerify(false);
         break;
     }
@@ -704,10 +699,11 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
         break;
       case "corrupted":
         setAlert(true);
-        setMessagetitle("Arquivo Corrompido");
-        setMessageinfo1("1. Informar local deste arquivo ou Anexar o Mesmo");
-        setMessageinfo2("");
-        setProblemn("Arquivo Corrompido");
+        messagetitle.current = "Arquivo Corrompido";
+        messageinfo1.current = "1. Informar local deste arquivo ou Anexar o Mesmo";
+        messageinfo2.current = "";
+        messageinfo3.current = "";
+        problemn.current = "Arquivo Corrompido";
         setAlertVerify(false);
         break;
       case "none":
@@ -719,7 +715,7 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
   // Atualiza o contexto e o estado local ao selecionar datas
   const handleSelect = (dates) => {
     setSelectedInternal(dates);
-    setSelectedDay(dates);
+    selectedDay.current = dates;
   };
 
   // Essa função busca pelo equipamento pela sua respectiva unidade
@@ -1003,6 +999,43 @@ export default function TicketsOptions({ Helpdesk, Name, Dashboard }) {
             {dashequipaments} {loadingoFetchingEquipaments && <RoboGlimpse />}
           </div>
         </div>
+      )}
+      {comodato && (
+        <Contract class="position-fixed top-50 start-50 translate-middle d-flex flex-column">
+          <div class="d-flex">
+            <h3 className="text-center w-100 fw-bold">Contrato Comodato</h3>
+            <button
+              onClick={() => {
+                setComodato(false);
+              }}
+            >
+              <img src={Close} alt="botão de fechar" />
+            </button>
+          </div>
+          <div class="d-flex flex-column">
+            <h3 class="mt-3">INSTRUMENTO PARTICULAR DE COMODATO</h3>
+            <span class="mt-3">
+              <b>LUPATECH S.A. - EM RECUPERAÇÃO JUDICIAL, </b>à, Rua Dalton Lanh
+              dos reis, 201, bairro Distrito Industrial, no Município de Caxias
+              do Sul, Estado de Rio Grande do Sul &ndash; CEP 95112-090,
+              regularmente inscrita no CNPJ/MF sob o nº89.463.822/0012-75,
+              doravante denominada simplesmente de <b>COMODANTE.</b>
+            </span>
+            <span class="mt-3">e</span>
+            <span class="mt-3">
+              <b>{Name}</b>, doravante denominada simplesmente
+              <b>COMODATÁRIO</b>.
+            </span>
+            <span class="mt-3">
+              <b>CONSIDERAÇÕES</b>
+            </span>
+            <span>
+              A <b>COMODANTE </b> é proprietária e legítima possuidora do
+              seguinte equipamento:
+            </span>
+          </div>
+          <button>Concordo</button>
+        </Contract>
       )}
     </>
   );

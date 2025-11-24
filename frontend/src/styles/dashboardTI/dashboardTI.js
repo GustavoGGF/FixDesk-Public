@@ -106,3 +106,30 @@ export const BtnClose = styled.button`
   -webkit-background: transparent; /* Adicionado para compatibilidade com navegadores baseados em WebKit */
   margin: 0.8em;
 `;
+
+export const ImgSettings = styled.img`
+  width: 3em;
+  cursor: pointer;
+`;
+
+export const DivSettings = styled.div`
+  width: 8em;
+  position: relative;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+export const DivShowOptions = styled.div`
+  width: 7em;
+  margin-right: 6em;
+  border-radius: 0.5em;
+  text-align: center;
+  padding: 0.2em;
+  cursor: pointer;
+  transition: 5ms;
+  &:hover {
+    color: var(--tomato-red);
+  }
+`;

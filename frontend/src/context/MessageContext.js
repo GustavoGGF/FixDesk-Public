@@ -1,13 +1,14 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useState, useRef } from "react";
 
 // Cria o contexto
 export const MessageContext = createContext();
 
 // Cria o provedor de contexto
 export const MessageProvider = ({ children }) => {
-  const [typeError, setTypeError] = useState("");
-  const [messageError, setMessageError] = useState("");
+  // Variáveis de Referência String
+  const typeError = useRef("")
+  const messageError = useRef("");
 
   const [message, setMessage] = useState(false);
-  return <MessageContext.Provider value={{ typeError, setTypeError, messageError, setMessageError, message, setMessage }}>{children}</MessageContext.Provider>;
+  return <MessageContext.Provider value={{ typeError, messageError, message, setMessage }}>{children}</MessageContext.Provider>;
 };
