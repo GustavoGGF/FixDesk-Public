@@ -3,17 +3,10 @@ import {
   useEffect,
   useRef,
   useContext,
-  useCallback,
 } from "react";
 import Navbar from "../components/general/navbar";
 import {
   Div,
-  DivCard,
-  H5Card,
-  SpanCard,
-  TD,
-  TR,
-  TRSPACE,
   DivZ,
 } from "../styles/historyStyle";
 import { TitlePage } from "../styles/helpdeskStyle";
@@ -24,6 +17,7 @@ import { TicketContext } from "../context/TicketContext";
 import { MessageContext } from "../context/MessageContext";
 import OpenTicketWindow from "../components/ticket/openTicketWindow";
 import ListTable from "../components/table/ListTable";
+import CardList from "../components/card/CardList/CardList";
 
 export default function History() {
   useEffect(() => {
@@ -73,90 +67,85 @@ export default function History() {
     } else {
       ThemeLight();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // O array de dependências vazio faz com que o useEffect execute apenas na montagem do componente
 
   // Variaveis de estado String
   const [colorTheme, setColorTheme] = useState("");
   const [theme, setTheme] = useState("");
-  const [themeCard, setThemeCard] = useState("");
   const [themeFilter, setThemeFilter] = useState("");
-  const [ticketID, setTicketID] = useState("");
-  const [token, setToken] = useState("");
-  const [ticketNAME, setTicketNAME] = useState("");
-  const [ticketDEPARTMENT, setTicketDEPARTMENT] = useState("");
-  const [ticketMAIL, setTicketMAIL] = useState("");
-  const [ticketCOMPANY, setTicketCOMPANY] = useState("");
-  const [ticketOCCURRENCE, setTicketOCCURRENCE] = useState("");
-  const [ticketPROBLEMN, setTicketPROBLEMN] = useState("");
-  const [ticketSECTOR, setTicketSECTOR] = useState("");
-  const [equipament, setEquipament] = useState("");
-  const [lifeTime, setLifetime] = useState("");
-  const [ticketResponsible_Technician, setTicketResponsible_Technician] =
-    useState("");
   const [blurNav, setBlurNav] = useState("");
-  const [observation, setObservation] = useState("");
-  const [initialFileData, setInitialFileData] = useState("");
-  const [initialFileName, setInitialFileName] = useState("");
-  const [initialContentFile, setInitialContentFile] = useState("");
-  const [dateAlocate, setDateAlocate] = useState("");
   // Declarando variaveis de estado Boolean
   const [chat, setChat] = useState(false);
-  const [fetchchat, setFetchChat] = useState(false);
-  const [inCard, setInCard] = useState(false);
-  const [inList, setInList] = useState(false);
-  const [btnMore, setBtnMore] = useState(false);
   const [ticketWindow, setTicketWindow] = useState(false);
-  const [showEquipament, setShowEquipament] = useState(false);
-  const [initialFileticket, setInitialFileTicket] = useState(false);
-  const [mountDataChat, setMountDataChat] = useState(false);
   // Varaiveis de estado Array
   const [Data, setData] = useState([]);
-  const [tickets, setTickets] = useState([]);
-  const [mountInitialChat, setMountInitialChat] = useState([]);
 
   // Variaveis de estado Number
   const [moreTickets, SetMoreTickets] = useState(0);
 
-  let colorBorder = "";
-
-  const dashBoard = useRef(null);
   const timeoutTicketUpdateRef = useRef(null);
+
+  const token = useRef("")
+  const ticketNAME = useRef("")
+  const ticketDEPARTMENT = useRef("")
+  const ticketMAIL = useRef("")
+  const ticketCOMPANY = useRef("")
+  const ticketSECTOR = useRef("")
+  const ticketOCCURRENCE = useRef("")
+  const ticketPROBLEMN = useRef("")
+  const equipament = useRef("")
+  const dateAlocate = useRef("")
+  const observation = useRef("")
+  const lifeTime = useRef("")
+  const ticketResponsibleTechnician = useRef("")
+  const ticketID = useRef("")
+  const initialFileData = useRef("")
+  const initialFileName = useRef("")
+  const initialContentFile = useRef("")
+
+  const showEquipament = useRef(false)
+  const initialFileticket = useRef(false)
+  const fetchchat = useRef(false)
+  const mountDataChat = useRef(false)
+
+  const mountInitialChat = useRef([])
 
   const {
     ticketData,
     setTicketData,
     ticketWindowAtt,
     setTicketWindowAtt,
-    cardOrList,
-    setCardOrList,
-    filterHistory,
-    setFilterHistory,
     ticketIDOpen,
     setTicketIDOpen,
-    setTicketList
+    setTicketList,
+    viewList,
+    viewCard,
+    sectionTicket,
+    themeCard,
+    startSearch,
+    setStartSearch
   } = useContext(TicketContext);
   const { typeError, messageError, setMessage, message } =
     useContext(MessageContext);
 
+  // Abrir os dados do chamado
   useEffect(() => {
     if (ticketIDOpen && ticketIDOpen !== "") {
       HelpdeskPage({ id: ticketIDOpen });
       setTicketIDOpen("");
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketIDOpen]);
 
-  useEffect(() => {
-    if (cardOrList && cardOrList.length !== 0) {
-      if (cardOrList === "List") {
-        ViewList();
-        setCardOrList("");
-      } else if (cardOrList === "Card") {
-        ViewCard();
-        setCardOrList("");
-      }
+    // Inicia o loop por novos chamados
+  useEffect(()=>{
+    if(startSearch){
+      CallNewTicket()
+      setStartSearch(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardOrList]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[startSearch])
 
   useEffect(() => {
     if (ticketWindowAtt) {
@@ -166,19 +155,25 @@ export default function History() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketWindowAtt]); // Dependências ajustadas para ambos os estados
 
-  // Função de Tema escuro
+  /**
+   * Função para alterar o tema da aplicação para o modo escuro.
+   * Limpa os filtros e estilos de cartões existentes e define o tema como "themeBlack".
+   */
   function ThemeBlack() {
     setThemeFilter("");
-    setThemeCard("");
+    themeCard.current = ""
     setColorTheme("text-light");
     setTheme("themeBlack");
   }
 
-  // Função de Tema claro
+  /**
+   * Função para alterar o tema da aplicação para o modo claro.
+   * Define os estilos de cartões e filtros como claros e define o tema como "themeLight".
+   */
   function ThemeLight() {
-    setThemeCard("themeCardLight");
-    setThemeFilter("themeFilterLight");
-    setTheme("themeLight");
+    themeCard.current = "theme-card-light";
+    setThemeFilter("theme-filter-light");
+    setTheme("theme-light");
   }
 
   useEffect(() => {
@@ -198,23 +193,11 @@ export default function History() {
         // Atualiza o estado `data` com as informações obtidas do localStorage
         setData(dataInfo.data);
 
-        var quantity = localStorage.getItem("quantity");
-        if (quantity === null || quantity === "null") {
-          localStorage.setItem("quantity", 10);
-          quantity = 10;
-        }
+        var quantity = localStorage.getItem("quantity") === null ? '10' : localStorage.getItem("quantity");
 
-        var status_current = localStorage.getItem("status");
-        if (status_current === null || status_current === "null") {
-          localStorage.setItem("status", "open");
-          status_current = "open";
-        }
+        var status_current = localStorage.getItem("status") === null ? 'open' : localStorage.getItem("status");
 
-        var order_current = localStorage.getItem("order");
-        if (order_current == null || order_current === "null") {
-          localStorage.setItem("order", "-id");
-          order_current = "-id";
-        }
+        var order_current = localStorage.getItem("order") === null ? '-id' : localStorage.getItem("order");
 
         // Envia os dados para o servidor através de uma requisição POST
         const response = await fetch(
@@ -249,13 +232,10 @@ export default function History() {
           setMessage(true);
         }
         // Atualiza os estados com os dados recebidos da API
-        setToken(data.token);
+        token.current = data.token;
         setTicketData(data.tickets);
       } catch (error) {
         // Em caso de erro, define mensagens de erro e exibe no console para depuração
-        typeError.current = "Erro Fatal";
-        messageError.current = (error.message || "Erro desconhecido");
-        setMessage(true);
         console.error("Erro na solicitação:", error);
       }
     };
@@ -277,7 +257,7 @@ export default function History() {
     return fetch(`/helpdesk/change-last-viewer/${id}`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": token, // Token CSRF para segurança da requisição
+        "X-CSRFToken": token.current, // Token CSRF para segurança da requisição
         "Content-Type": "application/json", // Define o formato do corpo da requisição como JSON
       },
       body: JSON.stringify({
@@ -302,7 +282,7 @@ export default function History() {
     fetch("/helpdesk/ticket/" + id, {
       method: "GET",
       headers: {
-        "X-CSRFToken": token,
+        "X-CSRFToken": token.current,
         Accept: "application/json",
       },
     })
@@ -322,7 +302,7 @@ export default function History() {
            * @returns {void} - Esta função não retorna nada diretamente, mas realiza várias operações conforme descrito acima.
            */
           setBlurNav("addBlur");
-          dashBoard.current.style.filter = "blur(3px)";
+          sectionTicket.current.style.filter = "blur(3px)";
           // Oculta a mensagem do chat
           setMessage(false);
           // Extrai a data do primeiro ticket de chamado
@@ -377,287 +357,58 @@ export default function History() {
 
           const resultado = CalculateDiference(data.start_date);
 
-          const lifetime = `${resultado.diffDias} Dias e ${resultado.diffHoras}:${resultado.diffMinutos} Horas`;
+          lifeTime.current = `${resultado.diffDias} Dias e ${resultado.diffHoras}:${resultado.diffMinutos} Horas`;
 
-          setTicketNAME(data.ticketRequester);
-          setTicketDEPARTMENT(data.department);
-          setTicketMAIL(data.mail);
-          setTicketCOMPANY(data.company);
-          setTicketSECTOR(data.sector);
-          setTicketOCCURRENCE(data.occurrence);
-          setTicketPROBLEMN(data.problemn);
+          ticketNAME.current = data.ticketRequester;
+          ticketDEPARTMENT.current = data.department;
+          ticketMAIL.current = data.mail;
+          ticketCOMPANY.current = data.company;
+          ticketSECTOR.current = data.sector;
+          ticketOCCURRENCE.current = data.occurrence;
+          ticketPROBLEMN.current = data.problemn;
           if (data.equipament && data.equipament.length !== 0) {
-            setShowEquipament(true);
-            setEquipament(data.equipament);
-            setDateAlocate(data.date_alocate);
+            showEquipament.current = true;
+            equipament.current = data.equipament;
+            dateAlocate.current = data.date_alocate;
           }
           if (data.observation && data.observation.length !== 0) {
-            setObservation(data.observation);
+            observation.current = data.observation;
           }
-          setLifetime(lifetime);
           if (
             data.responsible_technician &&
             data.responsible_technician.length !== 0
           ) {
-            setTicketResponsible_Technician(data.responsible_technician);
+            ticketResponsibleTechnician.current = data.responsible_technician;
             if (data.open) {
               setChat(true);
             }
           }
 
-          setTicketID(data.id);
+          ticketID.current = data.id;
           if (data.file !== null && data.file.length >= 1) {
-            setInitialFileData(data.file);
-            setInitialFileName(data.name_file);
-            setInitialContentFile(data.content_file);
-            setInitialFileTicket(true);
+            initialFileData.current = data.file;
+            initialFileName.current = data.name_file;
+            initialContentFile.current = data.content_file;
+            initialFileticket.current = true;
           }
           if (
             data.chat !== null &&
             data.chat !== undefined &&
             data.chat !== "undefined"
           ) {
-            setFetchChat(true);
-            setMountDataChat(true);
-            setMountInitialChat(data.chat);
+            fetchchat.current = true;
+            mountDataChat.current = true;
+            mountInitialChat.current = data.chat;
           }
           setTicketWindow(true);
           setTicketWindowAtt(false);
         } catch (err) {
-          return console.log(err);
+          return console.error(err);
         }
       })
       .catch((err) => {
-        messageError.current = err;
-        typeError.current = "Fatal ERROR";
-        setMessage(true);
-        return console.log(err);
+        return console.error(err);
       });
-  }
-
-  useEffect(() => {
-    if (ticketData && Object.keys(ticketData).length > 0) {
-      setTickets([]);
-      const selectView = localStorage.getItem("selectView");
-      if (selectView === null || selectView === "card") {
-        return ViewCard();
-      } else {
-        return ViewList();
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketData]);
-
-  function AddZero(numero) {
-    if (numero < 10) {
-      return "0" + numero;
-    }
-    return numero;
-  }
-
-  /**
-   * Esta função monta dinamicamente um grupo de chamados em formato de card,
-   * ajusta a interface para o modo "card view" e no final ativa um loop para
-   * continuar atualizando os chamados mostrados. Também persiste a escolha
-   * de visualização no localStorage e modifica o estilo dos botões de seleção.
-   */
-  function ViewCard() {
-    try {
-      // Limpa o estado atual de tickets antes de renderizar novos
-      setTickets([]);
-      setInCard(true); // Define a visualização como modo card
-      setInList(false); // Desativa o modo lista
-
-      // Armazena no localStorage que a view selecionada é "card"
-      localStorage.setItem("selectView", "card");
-
-      // Ajusta estilos visuais do botão selecionado para indicar o modo ativo
-      const btn = document.getElementById("select-view-card");
-      btn.style.backgroundColor = "#00B4D8";
-
-      // Reseta o estilo do botão de lista
-      const btn2 = document.getElementById("select-view-list");
-      btn2.style.backgroundColor = "transparent";
-
-      // Itera sobre os chamados disponíveis para criar os cards
-      ticketData.forEach((ticket) => {
-        var date = new Date(ticket["start_date"]);
-
-        var day = date.getDate();
-        var month = date.getMonth() + 1;
-        var year = date.getFullYear();
-
-        var dataFormatada = AddZero(day) + "/" + AddZero(month) + "/" + year;
-        var horaFormatada =
-          AddZero(date.getHours()) + ":" + AddZero(date.getMinutes());
-
-        var newDate = dataFormatada + " " + horaFormatada;
-
-        // Define a cor da borda do card com base no status do chamado
-        if (ticket["open"] === false) {
-          colorBorder = "ticket-close";
-        } else if (
-          ticket["open"] === true &&
-          ticket["responsible_technician"] === null
-        ) {
-          const currentDate = new Date();
-          const diferenceMilisecond = currentDate - date;
-          const diferenceDays = diferenceMilisecond / (1000 * 60 * 60 * 24);
-
-          if (diferenceDays >= 7) {
-            colorBorder = "ticket-urgent";
-          } else {
-            colorBorder = "ticket-open-not-view";
-          }
-        } else if (
-          ticket["open"] === true &&
-          ticket["responsible_technician"] !== null
-        ) {
-          colorBorder = "ticket-open-in-view";
-        } else if (ticket["open"] === null) {
-          colorBorder = "ticket-stop";
-        }
-
-        // Monta o componente visual do card para o chamado
-        const Div = (
-          <DivCard
-            className={`animate__animated animate__zoomInDown no-border ${colorBorder} ${themeCard} tickets_method`}
-            onClick={() => {
-              HelpdeskPage({ id: ticket["id"] });
-            }}
-          >
-            <H5Card>chamado {ticket["id"]}</H5Card>
-            <SpanCard>{ticket["ticketRequester"]}</SpanCard>
-            <SpanCard>Ocorrência: {ticket["occurrence"]}</SpanCard>
-            <SpanCard>Problema: {ticket["problemn"]}</SpanCard>
-            <SpanCard>{newDate}</SpanCard>
-          </DivCard>
-        );
-
-        // Adiciona o card no estado que mantém a lista de tickets exibidos
-        setTickets((ticketsDash) => [...ticketsDash, Div]);
-
-        // Ajusta a classe CSS do dashboard para garantir estilo do modo card
-        const dash = document.getElementById("dashboard");
-        dash.classList.add("dash-card");
-
-        // Exibe botão para carregar mais se a quantidade configurada for maior que 5
-        if (localStorage.getItem("quantity") > 5) {
-          setBtnMore(true);
-        }
-
-        // Inicia o loop para atualizar periodicamente os chamados exibidos
-        return CallNewTicket();
-      });
-    } catch (err) {
-      // Em caso de erro, faz o log para depuração
-      return console.log(err);
-    }
-  }
-
-  /**
-   * Esta função monta dinamicamente um grupo de chamados em formato de lista (tabela),
-   * ajusta a interface para o modo "list view" e no final ativa um loop para
-   * continuar atualizando os chamados exibidos. Persiste também a escolha do modo
-   * no localStorage e atualiza o estilo dos botões para refletir a seleção.
-   */
-  function ViewList() {
-    try {
-      // Limpa o estado atual de tickets antes de renderizar novos
-      setTickets([]);
-      setInList(true); // Define visualização como modo lista
-      setInCard(false); // Desativa o modo card
-
-      // Salva no localStorage que a view selecionada é "list"
-      localStorage.setItem("selectView", "list");
-
-      // Ajusta estilos visuais do botão selecionado para indicar o modo ativo
-      const btn = document.getElementById("select-view-list");
-      btn.style.backgroundColor = "#00B4D8";
-
-      // Reseta o estilo do botão de card
-      const btn2 = document.getElementById("select-view-card");
-      btn2.style.backgroundColor = "transparent";
-
-      // Itera sobre os chamados disponíveis para criar linhas da tabela
-      ticketData.forEach((ticket) => {
-        var date = new Date(ticket["start_date"]);
-
-        var day = date.getDate();
-        var month = date.getMonth() + 1;
-        var year = date.getFullYear();
-
-        var dataFormatada = AddZero(day) + "/" + AddZero(month) + "/" + year;
-        var horaFormatada =
-          AddZero(date.getHours()) + ":" + AddZero(date.getMinutes());
-
-        const newDate = dataFormatada + " " + horaFormatada;
-
-        // Define a classe CSS da linha da tabela com base no status do chamado
-        if (ticket["open"] === false) {
-          colorBorder = "ticket-close-list";
-        } else if (
-          ticket["open"] === true &&
-          ticket["responsible_technician"] === null
-        ) {
-          const currentDate = new Date();
-          const diferenceMilisecond = currentDate - date;
-          const diferenceDays = diferenceMilisecond / (1000 * 60 * 60 * 24);
-
-          if (diferenceDays >= 7) {
-            colorBorder = "ticket-urgent-list";
-          } else {
-            colorBorder = "ticket-open-not-view-list";
-          }
-        } else if (
-          ticket["open"] === true &&
-          ticket["responsible_technician"] !== null
-        ) {
-          colorBorder = "ticket-open-in-view-list";
-        } else if (ticket["open"] === null) {
-          colorBorder = "ticket-stop-list";
-        }
-
-        // Monta o elemento TR para representar o chamado como uma linha na tabela
-        const Div = (
-          <TR
-            key={ticket["id"]}
-            className={`animate__animated animate__backInUp no-border ${colorBorder} tickets_method`}
-            onClick={() => {
-              HelpdeskPage({ id: ticket["id"] });
-            }}
-          >
-            <TD>{ticket["id"]}</TD>
-            <TD>{ticket["ticketRequester"]}</TD>
-            <TD>{ticket["occurrence"]}</TD>
-            <TD>{ticket["problemn"]}</TD>
-            <TD>{newDate}</TD>
-          </TR>
-        );
-
-        // Linha de espaçamento para melhorar a leitura da tabela
-        const Space = <TRSPACE></TRSPACE>;
-
-        // Adiciona a linha e o espaço ao array de tickets
-        setTickets((ticketsDash) => [...ticketsDash, Div]);
-        setTickets((ticketsDash) => [...ticketsDash, Space]);
-
-        // Remove classe do modo card para garantir que tabela fique estilizada corretamente
-        const dash = document.getElementById("dashboard");
-        dash.classList.remove("dash-card");
-
-        // Exibe botão para carregar mais se configurado no localStorage
-        if (localStorage.getItem("quantity") > 5) {
-          setBtnMore(true);
-        }
-
-        // Inicia o loop para continuar atualizando periodicamente os chamados exibidos
-        return CallNewTicket();
-      });
-    } catch (err) {
-      // Loga o erro caso algo falhe no processo
-      return console.log();
-    }
   }
 
   /**
@@ -683,7 +434,7 @@ export default function History() {
       }, 60000);
     } catch (err) {
       // Loga qualquer erro ocorrido durante o processo para facilitar debug
-      return console.log(err);
+      return console.error(err);
     }
   }
 
@@ -724,72 +475,24 @@ export default function History() {
         setTicketData(data.tickets);
       })
       .catch((err) => {
-        // Em caso de erro, define mensagens de erro específicas e loga o erro no console
-        typeError.current = "FATAL ERROR";
-        messageError.current = err;
-        setMessage(true);
-        return console.log(err);
+        return console.error(err);
       });
   }
 
-  const handleAnimationEnd = useCallback((event) => {
-    try {
-      // Aplicando a classe diretamente no elemento que terminou a animação
-      event.target.classList.remove("no-border");
-      event.target.classList.add("ticket-hover");
-    } catch (err) {
-      return console.log(err);
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      if (!tickets || tickets.length === 0) return;
-
-      const ticketsInCard = document.querySelectorAll(".tickets_method");
-
-      if (filterHistory) {
-        ticketsInCard.forEach((ticket) => {
-          if (ticket.classList.contains("no-border")) {
-            ticket.classList.remove("no-border");
-          }
-          if (!ticket.classList.contains("ticket-hover")) {
-            ticket.classList.add("ticket-hover");
-          }
-        });
-        return setFilterHistory(false);
-      }
-      ticketsInCard.forEach((ticket) => {
-        ticket.addEventListener("animationend", handleAnimationEnd);
-      });
-
-      return () => {
-        ticketsInCard.forEach((ticket) => {
-          ticket.removeEventListener("animationend", handleAnimationEnd);
-        });
-      };
-    } catch (err) {
-      return console.log(err);
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tickets]);
-
   async function CloseTicket() {
     try {
-      const dash = document.getElementById("dashboard");
-      dash.style.filter = "blur(0)";
+      sectionTicket.current.style.filter = "blur(0)";
       setBlurNav("");
       setTicketWindow(false);
-      setEquipament("");
-      setObservation("");
-      setTicketResponsible_Technician("");
+      equipament.current = "";
+      observation.current = "";
+      ticketResponsibleTechnician.current = "";
       setChat(false);
-      setShowEquipament(false);
-      setMountInitialChat([]);
+      showEquipament.current = false;
+      mountInitialChat.current = [];
       return GetNewTickets();
     } catch (err) {
-      return console.log(err);
+      return console.error(err);
     }
   }
 
@@ -817,61 +520,59 @@ export default function History() {
         userName={Data.name}
         moreTickets={moreTickets}
       />
-      <section className="mt-3" ref={dashBoard} id="dashboard">
-        {inList && (
+      <section className="mt-3" ref={sectionTicket} id="dashboard">
+        {viewList && (
           <div className="w-100 d-flex justify-content-center">
             <ListTable ticket={ticketData} />
           </div>
         )}
-        {inCard && <>{tickets}</>}
+        {viewCard && <CardList ticket={ticketData} />}
       </section>
       {ticketWindow && (
         <OpenTicketWindow
           helpdesk={"helpdesk"}
-          ticketID={ticketID}
-          token={token}
+          ticketID={ticketID.current}
+          token={token.current}
           CloseTicket={CloseTicket}
-          ticketNAME={ticketNAME}
-          ticketDEPARTMENT={ticketDEPARTMENT}
-          ticketMAIL={ticketMAIL}
-          ticketCOMPANY={ticketCOMPANY}
-          ticketOCCURRENCE={ticketOCCURRENCE}
-          ticketPROBLEMN={ticketPROBLEMN}
-          ticketSECTOR={ticketSECTOR}
-          equipament={equipament}
-          dateAlocate={dateAlocate}
-          lifeTime={lifeTime}
-          ticketResponsible_Technician={ticketResponsible_Technician}
-          initialFileticket={initialFileticket}
-          showEquipament={showEquipament}
-          observation={observation}
-          mountDataChat={mountDataChat}
+          ticketNAME={ticketNAME.current}
+          ticketDEPARTMENT={ticketDEPARTMENT.current}
+          ticketMAIL={ticketMAIL.current}
+          ticketCOMPANY={ticketCOMPANY.current}
+          ticketOCCURRENCE={ticketOCCURRENCE.current}
+          ticketPROBLEMN={ticketPROBLEMN.current}
+          ticketSECTOR={ticketSECTOR.current}
+          equipament={equipament.current}
+          dateAlocate={dateAlocate.current}
+          lifeTime={lifeTime.current}
+          ticketResponsible_Technician={ticketResponsibleTechnician.current}
+          initialFileticket={initialFileticket.current}
+          showEquipament={showEquipament.current}
+          observation={observation.current}
+          mountDataChat={mountDataChat.current}
           chat={chat}
-          fetchchat={fetchchat}
+          fetchchat={fetchchat.current}
           userName={Data.name}
           userMail={Data.mail}
-          initialFileData={initialFileData}
-          initialFileName={initialFileName}
-          initialContentFile={initialContentFile}
-          mountInitialChat={mountInitialChat}
+          initialFileData={initialFileData.current}
+          initialFileName={initialFileName.current}
+          initialContentFile={initialContentFile.current}
+          mountInitialChat={mountInitialChat.current}
           techsNames={[]}
         />
       )}
-      {btnMore && (
-        <div className={`w-100 text-center mt-5 ${blurNav}`}>
-          <button
-            className="btn btn-info mb-5"
-            onClick={() => {
-              var quantity = localStorage.getItem("quantity");
-              quantity = Number(quantity);
-              quantity += 10;
-              return SetMoreTickets(quantity);
-            }}
-          >
-            Carregar Mais
-          </button>
-        </div>
-      )}
+      <div className={`w-100 text-center mt-5 ${blurNav}`}>
+        <button
+          className="btn btn-info mb-5"
+          onClick={() => {
+            var quantity = localStorage.getItem("quantity");
+            quantity = Number(quantity);
+            quantity += 10;
+            return SetMoreTickets(quantity);
+          }}
+        >
+          Carregar Mais
+        </button>
+      </div>
     </Div>
   );
 }

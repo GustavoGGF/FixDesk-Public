@@ -6,7 +6,7 @@
  * - useRef: hook que fornece uma maneira de armazenar referências a elementos DOM ou valores mutáveis que persistem entre as renderizações.
  * Importação da classe Chart do módulo "chart.js/auto" para a renderização de gráficos.
  */
-import React, { useState, useEffect, useRef, useContext } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { Chart } from "chart.js/auto";
 
 /**
@@ -21,38 +21,22 @@ import { Div1, Div2 } from "../../styles/dashboardBar";
 import { MessageContext } from "../../context/MessageContext";
 
 export default function DashboardBar() {
-  /**
-   * Constantes de estado utilizadas neste componente para gerenciar diferentes aspectos da sua funcionalidade.
-   * - loadingHistogram: estado que controla a exibição do indicador de carregamento para o histograma.
-   * - histogramData: estado que armazena os dados do histograma.
-   * - labeldash: estado utilizado para definir o rótulo do dashboard.
-   * - myChart: estado que mantém a instância do gráfico criado com a biblioteca Chart.js.
-   * - message: estado que controla a exibição de mensagens no componente.
-   * - typeError: estado que define o tipo de erro ocorrido.
-   * - messageError: estado que armazena a mensagem de erro a ser exibida.
-   */
+  // Variáveis de Estado Array
   const [histogramData, setHistogramData] = useState([]);
   const [oldHistogramData, setOldHistogramData] = useState([]);
-
-  const [labeldash, setLabelDash] = useState("");
-  const [barChatDataRange, setBarChatDataRange] = useState("");
-
+  // Variáveis de Estado Boolean
   const [loadingHistogram, setLoadingHistogram] = useState(true);
   const [messageBar, setMessageBar] = useState(false);
-
-  const [countAccess, setCountAccess] = useState(0);
-
+  // Variáveis de Referência Null
   const [myChart, setMyChart] = useState(null);
-
-  /**
-   * Constantes useRef utilizadas para referenciar elementos do DOM neste componente.
-   * - selectPeriod: referência ao elemento select utilizado para selecionar o período.
-   * - dashboardBar: referência ao elemento DOM que representa a barra do dashboard.
-   * - timeoutBarUpdateRef: referência ao elemento timeout para buscar informações em determinado periodo.
-   */
   const dashboardBar = useRef(null);
   const selectPeriod = useRef(null);
   const timeoutBarUpdateRef = useRef(null);
+  // Variáveis de Referência String
+  const barChatDataRange = useRef("")
+  const labeldash = useRef("")
+  // Variáveis de Referência Number
+  const countAccess = useRef(0)
 
   const { setTypeError, setMessageError } = useContext(MessageContext);
 
@@ -117,22 +101,22 @@ export default function DashboardBar() {
               case "week":
                 barChartData = range_days;
 
-                setLabelDash("Chamados da Semana");
+                labeldash.current = "Chamados da Semana";
                 break;
               case "month":
                 barChartData = range_days;
-                setLabelDash("Chamados do Mês");
+                labeldash.current = "Chamados do Mês";
                 break;
               case "year":
                 barChartData = "year";
-                setLabelDash("Chamados deste Ano");
+                labeldash.current = "Chamados deste Ano";
                 break;
               case "all":
                 barChartData = "all";
-                setLabelDash("Todos os Chamados");
+                labeldash.current = "Todos os Chamados";
                 break;
             }
-            setBarChatDataRange(barChartData);
+            barChatDataRange.current = barChartData;
             setHistogramData(data);
           } catch (err) {
             return console.log(err);
@@ -157,7 +141,7 @@ export default function DashboardBar() {
           setTypeError("Falta de Dados");
           setMessageError("Buscando Chamados do Mês");
           barChartData = "";
-          setBarChatDataRange("");
+          barChatDataRange.current = "";
           GetDataBar({ range_days: "month" });
           break;
         case "month":
@@ -166,7 +150,7 @@ export default function DashboardBar() {
           setTypeError("Falta de Dados");
           setMessageError("Buscando Chamados do Ano");
           barChartData = "";
-          setBarChatDataRange("");
+          barChatDataRange.current = "";
           console.log("at");
           
           GetDataBar({ range_days: "year" });
@@ -177,7 +161,7 @@ export default function DashboardBar() {
           setTypeError("Falta de Dados");
           setMessageError("Buscando todos os Chamados");
           barChartData = "";
-          setBarChatDataRange("");
+          barChatDataRange.current = "";
           GetDataBar({ range_days: "year" });
           break;
           default:
@@ -187,7 +171,7 @@ export default function DashboardBar() {
           setTypeError("Falta de Dados");
           setMessageError("Buscando Chamados do Mês");
           barChartData = "";
-          setBarChatDataRange("");
+          barChatDataRange.current = "";
           GetDataBar({ range_days: "month" });
           break;
       }
@@ -214,7 +198,7 @@ export default function DashboardBar() {
         if (histogramData && histogramData.days && histogramData.values) {
           try {
             if (
-              countAccess > 0 &&
+              countAccess.current >= 0 &&
               JSON.stringify(histogramData) === JSON.stringify(oldHistogramData)
             ) {
               CallNewBar();
@@ -232,7 +216,7 @@ export default function DashboardBar() {
                 labels: histogramData.days,
                 datasets: [
                   {
-                    label: [labeldash],
+                    label: [labeldash.current],
                     data: histogramData.values,
                   },
                 ],
@@ -241,8 +225,7 @@ export default function DashboardBar() {
 
             setMyChart(newChart);
             setOldHistogramData(histogramData);
-            var count = countAccess + 1;
-            setCountAccess(count);
+            countAccess.current ++;
             dashboardBar.current.style.display = "block";
             setLoadingHistogram(false);
             return CallNewBar();
@@ -290,7 +273,7 @@ export default function DashboardBar() {
       }
 
       timeoutBarUpdateRef.current = setTimeout(() => {
-        GetDataBar({ range_days: barChatDataRange });
+        GetDataBar({ range_days: barChatDataRange.current });
 
         timeoutBarUpdateRef.current = null;
       }, 60000);
@@ -315,15 +298,12 @@ export default function DashboardBar() {
           GetDataBar({ range_days: "week" });
           break;
         case "2":
-          // setCountAccess(count);
           GetDataBar({ range_days: "month" });
           break;
         case "3":
-          // setCountAccess(count);
           GetDataBar({ range_days: "year" });
           break;
         case "4":
-          // setCountAccess(count);
           GetDataBar({ range_days: "all" });
           break;
         default:

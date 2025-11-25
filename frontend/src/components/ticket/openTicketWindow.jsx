@@ -1,4 +1,4 @@
-import React, {
+import {
   useState,
   useEffect,
   useRef,
@@ -83,23 +83,20 @@ export default function OpenTicketWindow({
   mountInitialChat,
   techsNames,
 }) {
+  // Variável de Estado Boolean
   const [isAtButton, setIsAtButton] = useState(false);
   const [newFiles, setNewFiles] = useState(false);
   const [imageopen, setImageOpen] = useState(false);
   const [techDetails, setTechDetails] = useState(false);
-
-  const [countchat, setCountChat] = useState(0);
+  // Variável de Estado Number
   const [initUpdateChat, setInitUpdateChat] = useState(0);
-
-  const [textChat, setTextChat] = useState("");
+  // Variável de Estado String
   const [mountDetails, setMountDetails] = useState("");
   const [selectedTech, setSelectedTech] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [detailsChat, setDetailsChat] = useState("");
   const [modelName, setModelName] = useState("");
   const [dateEquipament, setDateEquipament] = useState("");
-  // const [pointer, setPointer] = useState("");
-
+  // Variável de Estado Array
   const [uploadNewFiles, setUploadNewFiles] = useState([]);
   const [fileticket, setFileTicket] = useState([]);
   const [mountChat, setMountChat] = useState(mountInitialChat);
@@ -107,7 +104,7 @@ export default function OpenTicketWindow({
 
   const techs = techsNames;
   const softGray = "#e9ecef";
-
+  // Variável de Referência Null
   const textareaRef = useRef(null);
   const chatDiv = useRef(null);
   const inputChat = useRef(null);
@@ -115,13 +112,18 @@ export default function OpenTicketWindow({
   const ticketOpen = useRef(null);
   const dropCont = useRef(null);
   const inputRef = useRef(null);
+  // Variável de Referência Number
+  const countchat = useRef(0)
+  const count = useRef(0)
+  // Variável de Referência String
+  const textChat = useRef("")
+  const detailsChat = useRef("")
 
   const { setTicketWindowAtt, setChangeTech, setReloadFilter, setForcedLoad } =
     useContext(TicketContext);
   const { setMessageError, setMessage, setTypeError } =
     useContext(MessageContext);
 
-  let count = 0;
   let timeoutId;
   const UpNwfile = [];
 
@@ -152,7 +154,7 @@ export default function OpenTicketWindow({
 
           setTicketWindowAtt(true);
         } catch (err) {
-          return console.log(err);
+          return console.error(err);
         }
       }
     },
@@ -237,7 +239,7 @@ export default function OpenTicketWindow({
               .join(", ")} e ${formattedDates[formattedDates.length - 1]}`
           );
         } catch (err) {
-          return console.log(err);
+          return console.error(err);
         }
       };
       formatDates(dateAlocate);
@@ -257,7 +259,7 @@ export default function OpenTicketWindow({
           setModelName(data.model.trim());
         })
         .catch((err) => {
-          return console.log(err);
+          return console.error(err);
         });
     }
   }, [equipament, showEquipament]);
@@ -276,8 +278,8 @@ export default function OpenTicketWindow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mountDataChat]);
 
-  useEffect(() => {
-    if (initialFileticket.current) {
+  useEffect(() => {   
+    if (initialFileticket) {     
       ReloadFiles({
         files: initialFileData,
         name_file: initialFileName,
@@ -301,8 +303,8 @@ export default function OpenTicketWindow({
           if (data !== null || data !== undefined || data !== "undefined") {
             if (data.chat !== null) {
               var newChat = parseInt(data.chat.length);
-              if (newChat > countchat) {
-                setCountChat(newChat);
+              if (newChat > countchat.current) {
+                countchat.current = newChat;
                 ReloadChat({ data: data });
               } else {
                 return;
@@ -312,10 +314,7 @@ export default function OpenTicketWindow({
           }
         })
         .catch((err) => {
-          setMessageError(err);
-          setTypeError("Fatal ERROR");
-          setMessage(true);
-          return console.log(err);
+          return console.error(err);
         });
       return;
     }
@@ -329,9 +328,9 @@ export default function OpenTicketWindow({
   }, []);
 
   function AddCount() {
-    count++;
+    count.current ++;
 
-    setInitUpdateChat(count);
+    setInitUpdateChat(count.current);
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
@@ -421,10 +420,7 @@ export default function OpenTicketWindow({
         document.body.removeChild(a);
       })
       .catch((err) => {
-        setMessageError(err);
-        setTypeError("Fatal ERROR");
-        setMessage(true);
-        return console.log(err);
+        return console.loerrorg(err);
       });
   }
 
@@ -441,7 +437,7 @@ export default function OpenTicketWindow({
       data.chat !== "undefined"
     ) {
       try {
-        setCountChat(data.chat.length);
+        countchat.current = data.chat.length;
 
         const regex = /\[\[([^[\]]+?)\],\[([^[\]]+?)\],\[([^[\]]+?)\]\]/g;
 
@@ -567,7 +563,7 @@ export default function OpenTicketWindow({
         // Chama a função, mas o código segue sem esperar a execução terminar
         callAsyncFunction();
       } catch (err) {
-        return console.log(err);
+        return console.error(err);
       }
     }
   }
@@ -592,14 +588,14 @@ export default function OpenTicketWindow({
     if (event.key === "Enter") {
       if (event.shiftKey) {
         event.preventDefault();
-        setTextChat(event.target.value);
+        textChat.current = event.target.value;
         return;
       }
       SendChat();
       event.preventDefault();
       return;
     } else {
-      setTextChat(event.target.value);
+      textChat.current = event.target.value;
       return;
     }
   }
@@ -633,7 +629,7 @@ export default function OpenTicketWindow({
       inputChat.current.value = "";
 
       // Se o texto do chat estiver vazio, não faz nada
-      if (textChat.length === 0) {
+      if (textChat.current.length === 0) {
         return;
       }
       // Envia a mensagem do chat para o servidor
@@ -646,7 +642,7 @@ export default function OpenTicketWindow({
         body: JSON.stringify({
           helpdesk: helpdesk,
           user: userName, // Nome do usuário que está enviando a mensagem
-          chat: textChat, // O conteúdo do chat
+          chat: textChat.current, // O conteúdo do chat
           hours: horaFormatada, // Hora formatada da mensagem
           date: dataFormatada, // Data formatada da mensagem
           mail: userMail,
@@ -657,19 +653,15 @@ export default function OpenTicketWindow({
           return response.json();
         })
         .then((data) => {
-          setTextChat("");
+          textChat.current = "";
           // Atualiza a interface do chat com os novos dados
           ReloadChat({ data: data });
         })
         .catch((err) => {
-          // Se ocorrer um erro, exibe a mensagem de erro no frontend
-          setMessageError(err);
-          setTypeError("Fatal ERROR");
-          setMessage(true);
-          return console.log(err); // Exibe o erro no console para depuração
+          return console.error(err); // Exibe o erro no console para depuração
         });
     } catch (err) {
-      return console.log(err);
+      return console.error(err);
     }
   }
 
@@ -724,14 +716,10 @@ export default function OpenTicketWindow({
           // reloadChat({ data: data.chat });
         })
         .catch((err) => {
-          // Exibe mensagem de erro e loga o erro no console
-          setMessageError(err);
-          setTypeError("FATAL ERROR");
-          setMessage(true);
-          return console.log(err);
+          return console.error(err);
         });
     } catch (err) {
-      return console.log(err);
+      return console.error(err);
     }
   }
 
@@ -919,7 +907,7 @@ export default function OpenTicketWindow({
         );
         setFileTicket((fileticket) => [...fileticket, Div]);
       } catch (err) {
-        return console.log(err);
+        return console.error(err);
       }
     }
   }
@@ -1017,7 +1005,7 @@ export default function OpenTicketWindow({
         // Indica que novos arquivos foram selecionados
         setNewFiles(true);
       } catch (err) {
-        return console.log(err);
+        return console.error(err);
       }
     } else {
       return setNameNWFiles();
@@ -1042,7 +1030,7 @@ export default function OpenTicketWindow({
       // Atualiza o estado com a nova lista de arquivos
       setUploadNewFiles(Array.from(dataTransfer.files));
     } catch (err) {
-      return console.log(err);
+      return console.error(err);
     }
   }
 
@@ -1106,15 +1094,11 @@ export default function OpenTicketWindow({
             return response.json();
           }
         })
-        .catch((err) => {
-          // Trata erros de requisição e exibe uma mensagem de erro
-          setMessageError("Erro ao finalizar o Ticket");
-          setTypeError("FATAL ERROR");
-          setMessage(true);
-          return console.log(err); // Exibe o erro no console para depuração
+        .catch((err) => {;
+          return console.error(err); // Exibe o erro no console para depuração
         });
     } catch (err) {
-      return console.log(err);
+      return console.error(err);
     }
   }
 
@@ -1134,7 +1118,7 @@ export default function OpenTicketWindow({
         MountChatDetails(data.details);
       })
       .catch((err) => {
-        return console.log(err);
+        return console.error(err);
       });
   }
 
@@ -1203,25 +1187,25 @@ export default function OpenTicketWindow({
         };
         setMountDetails(renderGroupedItems()); // Define as mensagens montadas.
       } catch (err) {
-        return console.log(err);
+        return console.error(err);
       }
     }
   }
 
   function NewChatDetails(event) {
     if (event.key === "Enter") {
-      setDetailsChat(event.target.value); // Atualiza o texto do chat de detalhes técnicos.
+      detailsChat.current = event.target.value; // Atualiza o texto do chat de detalhes técnicos.
       SendDetails(); // Envia a mensagem do chat de detalhes técnicos.
       event.preventDefault();
     } else {
-      setDetailsChat(event.target.value); // Atualiza o texto do chat de detalhes técnicos enquanto é digitado.
+      detailsChat.current = event.target.value; // Atualiza o texto do chat de detalhes técnicos enquanto é digitado.
     }
   }
 
   function SendDetails() {
     try {
       inputRef.current.value = ""; // Limpa o valor do campo de entrada.
-      if (detailsChat.length === 0) {
+      if (detailsChat.current.length === 0) {
         return;
       }
       // Implementação para enviar mensagens para o chat de detalhes técnicos.
@@ -1245,7 +1229,7 @@ export default function OpenTicketWindow({
           "Tech-Details": "ok",
         },
         body: JSON.stringify({
-          chat: detailsChat,
+          chat: detailsChat.current,
           date: dataFormatada,
           hours: horaFormatada,
         }),
@@ -1261,10 +1245,10 @@ export default function OpenTicketWindow({
           MountChatDetails(data.chat);
         })
         .catch((err) => {
-          return console.log(err);
+          return console.error(err);
         });
     } catch (err) {
-      return console.log();
+      return console.error();
     }
   }
 
@@ -1315,13 +1299,10 @@ export default function OpenTicketWindow({
             }
           })
           .catch((err) => {
-            setMessageError(err);
-            setTypeError("FATAL ERROR");
-            setMessage(true);
-            return console.log(err);
+            return console.error(err);
           });
       } catch (err) {
-        return console.log(err);
+        return console.error(err);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

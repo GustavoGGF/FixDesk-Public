@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useContext, useCallback } from "react";
+import { useEffect, useState, useRef, useContext } from "react";
 import "react-day-picker/dist/style.css";
 import {
   Div,
@@ -8,7 +8,7 @@ import {
 } from "../styles/dashboardTI/dashboardTI.js";
 import DashBoardPie from "../components/dashboard/dashboardPie.jsx";
 import Navbar from "../components/general/navbar.jsx";
-import { DivCard, H5Card, SpanCard, DivZ } from "../styles/historyStyle.js";
+import { DivZ } from "../styles/historyStyle.js";
 import { TitlePage } from "../styles/helpdeskStyle.js";
 import Message from "../components/utility/message.jsx";
 import "../styles/bootstrap/css/bootstrap.css";
@@ -23,6 +23,7 @@ import ManageUser from "../components/utility/manageUser.jsx";
 import { UserManagementContext } from "../context/UserManagement.js";
 import ExcludeUser from "../components/utility/excludeUser.jsx";
 import ListTable from "../components/table/ListTable.jsx";
+import CardList from "../components/card/CardList/CardList.jsx"
 /**
  * Função para ajustar o tema com base na configuração de tema armazenada.
  * - Utiliza o hook useEffect para executar a lógica uma vez após a renderização inicial.
@@ -33,32 +34,21 @@ import ListTable from "../components/table/ListTable.jsx";
  */
 
 export default function DashboardTI() {
+  // Ao carregar a pagina aplica o tema
   useEffect(() => {
     document.title = "DashBoard TI";
-    const theme = localStorage.getItem("Theme");
-    if (theme === null || theme === "black") {
-      localStorage.setItem("Theme", "black");
-      return ThemeBlack();
-    } else {
-      return ThemeLight();
-    }
+    const theme = localStorage.getItem("Theme") === null ? 'black' : localStorage.getItem("Theme");
+    if (theme === "black") return ThemeBlack();
+    return ThemeLight();
+    
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  /**
-   * Variáveis de estado para o componente DashboardTI.
-   */
 
   /**
    * Variáveis de estado Boolean
    */
   const [chat, setChat] = useState(false);
-  const [inCard, setInCard] = useState(false);
-  const [inList, setInList] = useState(false);
   const [ticketWindow, setTicketWindow] = useState(false);
-  const [showEquipament, setShowEquipament] = useState(false);
-  const [btnMore, setBtnMore] = useState(false);
-  const [mountDataChat, setMountDataChat] = useState(false);
-  const [fetchchat, setFetchChat] = useState(false);
   const [showPageConfig, setShowPageConfig] = useState(false);
   /**
    * Variáveis de estado String
@@ -67,21 +57,6 @@ export default function DashboardTI() {
   const [colorTheme, setColorTheme] = useState("");
   const [theme, setTheme] = useState("");
   const [themeFilter, setThemeFilter] = useState("");
-  const [ticketDEPARTMENT, setTicketDEPARTMENT] = useState("");
-  const [ticketID, setTicketID] = useState("");
-  const [ticketMAIL, setTicketMAIL] = useState("");
-  const [ticketOCCURRENCE, setTicketOCCURRENCE] = useState("");
-  const [ticketPROBLEMN, setTicketPROBLEMN] = useState("");
-  const [ticketResponsible_Technician, setTicketResponsible_Technician] =
-    useState("");
-  const [ticketSECTOR, setTicketSECTOR] = useState("");
-  const [equipament, setEquipament] = useState("");
-  const [ticketNAME, setTicketNAME] = useState("");
-  const [observation, setObservation] = useState("");
-  const [initialFileData, setInitialFileData] = useState("");
-  const [initialFileName, setInitialFileName] = useState("");
-  const [initialContentFile, setInitialContentFile] = useState("");
-  const [dateAlocate, setDateAlocate] = useState("");
   /**
    * Variáveis de estado Int.
    */
@@ -89,25 +64,35 @@ export default function DashboardTI() {
   /**
    * Variáveis de estado Array.
    */
-  const [ticketsDash, setTicketsDash] = useState([]);
-  const [userData, setUserData] = useState([]);
-  const [mountInitialChat, setMountInitialChat] = useState([]);
-  
-  // Variáveis de referência null 
-  const sectionTicket = useRef(null);
+  const [userData, setUserData] = useState([]);  
+  // Variáveis de Referência null
   const timeoutTicketUpdateRef = useRef(null);
-  // Variáveis de referência dict
-  const divRefs = useRef({});  
   // Variáveis de referência bool
   const initialFileticket = useRef(false)
+  const showEquipament = useRef(false)
+  const mountDataChat = useRef(false)
+  const fetchchat = useRef(false)
   // Variáveis de referência string
   const lifeTime = useRef("")
-  const themeCard = useRef("")
   const ticketCOMPANY = useRef("")
-  const colorBorder = useRef("")
   const token = useRef("")
+  const ticketDEPARTMENT = useRef("")
+  const ticketID = useRef("")
+  const ticketMAIL = useRef("")
+  const ticketOCCURRENCE = useRef("")
+  const ticketPROBLEMN = useRef("")
+  const ticketResponsibleTechnician = useRef("")
+  const ticketSECTOR = useRef("")
+  const equipament = useRef("")
+  const ticketNAME = useRef("")
+  const observation = useRef("")
+  const initialFileData = useRef("")
+  const initialFileName = useRef("")
+  const initialContentFile = useRef("")
+  const dateAlocate = useRef("")
   // Variáveis de referência Array
   const techsNames = useRef([])
+  const mountInitialChat = useRef([])
 
   // Variáveis de contexto para os chamados
   const {
@@ -117,12 +102,14 @@ export default function DashboardTI() {
     setTicketWindowAtt,
     changeTech,
     setChangeTech,
-    cardOrList,
-    setCardOrList,
-    forcedLoad,
-    setForcedLoad,
     ticketIDOpen,
     setTicketIDOpen,
+    sectionTicket,
+    startSearch,
+    setStartSearch,
+    themeCard,
+    viewList,
+    viewCard
   } = useContext(TicketContext);
   // Variáveis de contexto para as menssagens
   const { typeError, messageError, setMessage, message } =
@@ -131,12 +118,23 @@ export default function DashboardTI() {
   const { setConfigUsers, configUsers, showExcludeUser, setShowExcludeUser } =
     useContext(UserManagementContext);
 
+  // Abre a tela de dados do chamado
   useEffect(() => {
     if (ticketIDOpen && ticketIDOpen !== "") {
       HelpdeskPage({ id: ticketIDOpen });
       setTicketIDOpen("");
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketIDOpen]);
+
+  // Inicia o loop por novos chamados
+  useEffect(()=>{
+    if(startSearch){
+      CallNewTicket()
+      setStartSearch(false)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[startSearch])
 
   /**
    * useEffect para fechar telas específicas ao pressionar a tecla Escape.
@@ -212,19 +210,6 @@ export default function DashboardTI() {
   }, [userData]);
 
   useEffect(() => {
-    if (cardOrList && cardOrList.length !== 0) {
-      if (cardOrList === "List") {
-        ListView();
-        setCardOrList("");
-      } else if (cardOrList === "Card") {
-        CardView();
-        setCardOrList("");
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardOrList]);
-
-  useEffect(() => {
     if (ticketWindowAtt) {
       setTicketWindowAtt(false);
       CloseTicket();
@@ -248,7 +233,7 @@ export default function DashboardTI() {
   function ThemeBlack() {
     setThemeFilter("");
     themeCard.current = ""
-    setColorTheme("color-light");
+    setColorTheme("text-light");
     setTheme("themeBlack");
   }
 
@@ -291,157 +276,6 @@ export default function DashboardTI() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    // Verificar se existem tickets e se o local storage foi inicializado
-    if (ticketData && Object.keys(ticketData).length > 0) {
-      // Obter o valor do local storage
-      const selectView = localStorage.getItem("selectView") === null ? "card" : localStorage.getItem("selectView")
-
-      // Verificar se o valor do local storage está definido
-      if (selectView === "card") return CardView();
-
-      // Se for "list", ativar a função de lista
-      return ListView();
-      
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketData]);
-
-  /**
-   * Função para adicionar um zero na frente do número caso seja menor que 10.
-   * @param {number} numero - O número a ser formatado.
-   * @returns {string} O número formatado com zero à esquerda, se necessário.
-   */
-  function AddZero(numero) {
-    if (numero < 10) {
-      return "0" + numero; // Adiciona um zero à esquerda se o número for menor que 10.
-    }
-    return numero.toString(); // Retorna o número como string se não for menor que 10.
-  }
-
-  /**
-   * Função para montar os chamados em forma de card.
-   */
-  function CardView() {
-    try {
-      // Limpar o estado e preparar o ambiente
-      setTicketsDash([]);
-      setInCard(true);
-      setInList(false);
-
-      // Definir o tipo de visualização como "card" no local storage
-      localStorage.setItem("selectView", "card");
-
-      const btn = document.getElementById("select-view-list");
-      btn.style.backgroundColor = "transparent";
-
-      const btn2 = document.getElementById("select-view-card");
-      btn2.style.backgroundColor = "#00B4D8";
-
-      // Mapear os tickets para elementos de cartão
-      ticketData.forEach((ticket) => {
-        // Variáveis para montar a data dos chamados.
-        var date = new Date(ticket["start_date"]); // Obtém a data de início do chamado.
-        var day = date.getDate(); // Obtém o dia do mês.
-        var month = date.getMonth() + 1; // Obtém o mês (0 = janeiro, 1 = fevereiro, etc.) e adiciona 1 para corresponder ao formato convencional.
-        var year = date.getFullYear(); // Obtém o ano.
-
-        // Variáveis que contêm data e hora formatadas utilizando a função adicionaZero.
-        var dataFormatada = AddZero(day) + "/" + AddZero(month) + "/" + year;
-        var horaFormatada =
-          AddZero(date.getHours()) + ":" + AddZero(date.getMinutes());
-
-        // Combinação da data e hora formatadas.
-        const newDate = dataFormatada + " " + horaFormatada; // Combina a data e a hora formatadas separadas por um espaço.
-
-        // Ajuste da borda do ticket com base no estado do chamado.
-        if (ticket["open"] === false) {
-          // Se o chamado não estiver aberto, ele foi finalizado.
-          colorBorder.current = "ticket-close"; // Define a borda como indicativa de chamado finalizado.
-        } else if (
-          ticket["open"] === true &&
-          ticket["responsible_technician"] === null
-        ) {
-          // Se o chamado estiver aberto e sem técnico responsável.
-          const currentDate = new Date(); // Obtém a data atual.
-          const differenceMilisecond = currentDate - date; // Calcula a diferença em milissegundos entre a data atual e a data de início do chamado.
-          const differenceDays = differenceMilisecond / (1000 * 60 * 60 * 24); // Converte a diferença para dias.
-          if (differenceDays >= 7) {
-            // Se o chamado estiver aberto há mais de 7 dias.
-            colorBorder.current = "ticket-urgent"; // Define a borda como indicativa de chamado urgente.
-          } else {
-            // Se o chamado estiver aberto há menos de 7 dias.
-            colorBorder.current = "ticket-open-not-view "; // Define a borda como indicativa de chamado aberto, mas não visualizado.
-          }
-        } else if (
-          ticket["open"] === true &&
-          ticket["responsible_technician"] !== null
-        ) {
-          // Se o chamado estiver aberto e com técnico responsável.
-          colorBorder.current = "ticket-open-in-view "; // Define a borda como indicativa de chamado aberto e em atendimento.
-        } else if (ticket["open"] === null) {
-          // Se o estado do chamado for nulo.
-          colorBorder.current = "ticket-stop"; // Define a borda como indicativa de chamado interrompido.
-        }
-
-        const Div = (
-          <DivCard
-            key={ticket["id"]}
-            ref={(el) => (divRefs.current[`tck${ticket.id}`] = el)}
-            className={`animate__animated animate__zoomInDown no-border ${colorBorder.current} ${themeCard.current} tickets-method`}
-            onClick={() => {
-              HelpdeskPage({ id: ticket["id"] });
-            }}
-          >
-            <H5Card>chamado {ticket["id"]}</H5Card>
-            <SpanCard>{ticket["ticketRequester"]}</SpanCard>
-            <SpanCard>Ocorrência: {ticket["occurrence"]}</SpanCard>
-            <SpanCard>Problema: {ticket["problemn"]}</SpanCard>
-            <SpanCard>{newDate}</SpanCard>
-          </DivCard>
-        );
-
-        setTicketsDash((ticketsDash) => [...ticketsDash, Div]); // Adiciona o cartão ao array de chamados.
-        sectionTicket.current.classList.add("dash-card"); // Adiciona a classe "dash-card" ao elemento HTML.
-        if (localStorage.getItem("quantity") > 5) {
-          setBtnMore(true);
-        }
-
-        // Chama o Loop que busca novos chamados de 1 em 1 minuto
-        return CallNewTicket();
-      });
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-  /**
-   * Função para montar os chamados em forma de lista.
-   */
-  function ListView() {
-    try {
-      // Limpar o estado e preparar o ambiente
-      setInList(true);
-      setInCard(false);
-
-      // Definir o tipo de visualização como "list" no local storage
-      localStorage.setItem("selectView", "list");
-
-      const btn = document.getElementById("select-view-list");
-      btn.style.backgroundColor = "#00B4D8";
-
-      const btn2 = document.getElementById("select-view-card");
-      btn2.style.backgroundColor = "transparent";
-
-      if (localStorage.getItem("quantity") > 5) {
-        setBtnMore(true);
-      }
-
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
   /**
    * Esta função atua como um loop controlado via setTimeout para consultar
    * novos chamados a cada 60 segundos, garantindo que não existam timeouts
@@ -465,7 +299,7 @@ export default function DashboardTI() {
       }, 60000);
     } catch (err) {
       // Loga qualquer erro ocorrido durante o processo para facilitar debug
-      return console.log(err);
+      return console.error(err);
     }
   }
 
@@ -499,52 +333,9 @@ export default function DashboardTI() {
         typeError.current = "FATAL ERROR";
         messageError.current = err;
         setMessage(true);
-        return console.log(err);
+        return console.error(err);
       });
   }
-
-  const handleAnimationEnd = useCallback((event) => {
-    try {
-      // Aplicando a classe diretamente no elemento que terminou a animação
-      event.target.classList.remove("no-border");
-      event.target.classList.add("ticket-hover");
-    } catch (err) {
-      console.log(err);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!ticketsDash || ticketsDash.length === 0) return;
-
-    try {
-      const ticketsInCard = document.querySelectorAll(".tickets-method");
-
-      if (forcedLoad) {
-        ticketsInCard.forEach((ticket) => {
-          if (ticket.classList.contains("no-border")) {
-            ticket.classList.remove("no-border");
-          }
-          if (!ticket.classList.contains("ticket-hover")) {
-            ticket.classList.add("ticket-hover");
-          }
-        });
-        return setForcedLoad(false);
-      }
-
-      ticketsInCard.forEach((ticket) => {
-        ticket.addEventListener("animationend", handleAnimationEnd);
-      });
-
-      return () => {
-        ticketsInCard.forEach((ticket) => {
-          ticket.removeEventListener("animationend", handleAnimationEnd);
-        });
-      };
-    } catch (err) {
-      console.log(err);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketsDash]);
 
   /**
    * Altera o último visualizador de um chamado no sistema de helpdesk.
@@ -570,7 +361,7 @@ export default function DashboardTI() {
         }),
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
@@ -650,35 +441,35 @@ export default function DashboardTI() {
 
           lifeTime.current = `${resultado.diffDias} Dias e ${resultado.diffHoras}:${resultado.diffMinutos} Horas`;
 
-          setTicketNAME(data.ticketRequester);
-          setTicketDEPARTMENT(data.department);
-          setTicketMAIL(data.mail);
+          ticketNAME.current = data.ticketRequester;
+          ticketDEPARTMENT.current = data.department;
+          ticketMAIL.current = data.mail;
           ticketCOMPANY.current = data.company;
-          setTicketSECTOR(data.sector);
-          setTicketOCCURRENCE(data.occurrence);
-          setTicketPROBLEMN(data.problemn);
+          ticketSECTOR.current = data.sector;
+          ticketOCCURRENCE.current = data.occurrence;
+          ticketPROBLEMN.current = data.problemn;
           if (data.observation && data.observation.length !== 0) {
-            setObservation(data.observation);
+            observation.current = data.observation;
           }
           if (data.equipament && data.equipament.length !== 0) {
-            setShowEquipament(true);
-            setEquipament(data.equipament);
-            setDateAlocate(data.date_alocate);
+            showEquipament.current = true;
+            equipament.current = data.equipament;
+            dateAlocate.current = data.date_alocate;
           }
           if (
             data.responsible_technician &&
             data.responsible_technician.length !== 0
           ) {
-            setTicketResponsible_Technician(data.responsible_technician);
+            ticketResponsibleTechnician.current = data.responsible_technician;
           }
-          setTicketID(data.id);
+          ticketID.current = data.id;
 
           var name_verify = userData.name;
           // Verifica se o ticket contém arquivos do tipo e-mail e gera a visualização correspondente, se aplicável.
-          if (data.file !== null && data.file.length >= 1) {
-            setInitialFileData(data.file);
-            setInitialFileName(data.name_file);
-            setInitialContentFile(data.content_file);
+          if (data.file !== null && data.file.length >= 1) {           
+            initialFileData.current = data.file;
+            initialFileName.current = data.name_file;
+            initialContentFile.current = data.content_file;
             initialFileticket.current = true;
           }
           // Identifica o chat, verifica se contém valores e os separa em grupos de Data, Receptor e Horário.
@@ -687,9 +478,9 @@ export default function DashboardTI() {
             data.chat !== undefined &&
             data.chat !== "undefined"
           ) {
-            setFetchChat(true);
-            setMountDataChat(true);
-            setMountInitialChat(data.chat);
+            fetchchat.current = true;
+            mountDataChat.current = true;
+            mountInitialChat.current = data.chat;
           }
 
           // Verifica se o nome que consta no técnico é o mesmo que está logado.
@@ -717,10 +508,10 @@ export default function DashboardTI() {
           messageError.current = err;
           typeError.current = "FATAL ERROR";
           setMessage(true);
-          return console.log(err);
+          return console.error(err);
         });
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
@@ -740,7 +531,7 @@ export default function DashboardTI() {
           }
         }
       } catch (err) {
-        return console.log(err);
+        return console.error(err);
       }
     }
     return;
@@ -750,18 +541,18 @@ export default function DashboardTI() {
     if (sectionTicket && sectionTicket.current) {
       sectionTicket.current.style.filter = "blur(0)";
     }
-    setInitialFileData("");
-    setInitialFileName("");
-    setInitialContentFile("");
+    initialFileData.current = "";
+    initialFileName.current = "";
+    initialContentFile.current = "";
     initialFileticket.current = false; 
     setBlurNav("");
     setTicketWindow(false);
-    setEquipament("");
-    setObservation("");
-    setTicketResponsible_Technician("");
+    equipament.current = "";
+    observation.current = "";
+    ticketResponsibleTechnician.current = "";
     setChat(false);
-    setShowEquipament(false);
-    setMountInitialChat([]);
+    showEquipament.current = false;
+    mountInitialChat.current = [];
     return GetNewTickets();
   }
 
@@ -838,60 +629,58 @@ export default function DashboardTI() {
         />
       </div>
       <section ref={sectionTicket} className="mt-3 position-relative">
-        {inList && (
+        {viewList && (
           <div className="w-100 d-flex justify-content-center">
-            <ListTable ticket={ticketData} />{" "}
+            <ListTable ticket={ticketData} />
           </div>
         )}
-        {inCard && <>{ticketsDash}</>}
+        {viewCard && <CardList ticket={ticketData} />}
       </section>
       {ticketWindow && (
         <OpenTicketWindow
           helpdesk={"dashboard"}
-          ticketID={ticketID}
+          ticketID={ticketID.current}
           token={token.current}
           CloseTicket={CloseTicket}
-          ticketNAME={ticketNAME}
-          ticketDEPARTMENT={ticketDEPARTMENT}
-          ticketMAIL={ticketMAIL}
+          ticketNAME={ticketNAME.current}
+          ticketDEPARTMENT={ticketDEPARTMENT.current}
+          ticketMAIL={ticketMAIL.current}
           ticketCOMPANY={ticketCOMPANY.current}
-          ticketOCCURRENCE={ticketOCCURRENCE}
-          ticketPROBLEMN={ticketPROBLEMN}
-          ticketSECTOR={ticketSECTOR}
-          equipament={equipament}
-          dateAlocate={dateAlocate}
+          ticketOCCURRENCE={ticketOCCURRENCE.current}
+          ticketPROBLEMN={ticketPROBLEMN.current}
+          ticketSECTOR={ticketSECTOR.current}
+          equipament={equipament.current}
+          dateAlocate={dateAlocate.current}
           lifeTime={lifeTime.current}
-          ticketResponsible_Technician={ticketResponsible_Technician}
+          ticketResponsible_Technician={ticketResponsibleTechnician.current}
           initialFileticket={initialFileticket.current}
-          showEquipament={showEquipament}
-          observation={observation}
-          mountDataChat={mountDataChat}
+          showEquipament={showEquipament.current}
+          observation={observation.current}
+          mountDataChat={mountDataChat.current}
           chat={chat}
-          fetchchat={fetchchat}
+          fetchchat={fetchchat.current}
           userName={userData.name}
           userMail={userData.mail}
-          initialFileData={initialFileData}
-          initialFileName={initialFileName}
-          initialContentFile={initialContentFile}
-          mountInitialChat={mountInitialChat}
+          initialFileData={initialFileData.current}
+          initialFileName={initialFileName.current}
+          initialContentFile={initialContentFile.current}
+          mountInitialChat={mountInitialChat.current}
           techsNames={techsNames.current}
         />
       )}
-      {btnMore && (
-        <div className={`w-100 text-center ${blurNav} mt-5`}>
-          <button
-            className="btn btn-info mb-5"
-            onClick={() => {
-              var quantity = localStorage.getItem("quantity");
-              quantity = Number(quantity);
-              quantity += 10;
-              return SetMoreTickets(quantity);
-            }}
-          >
-            Carregar Mais
-          </button>
-        </div>
-      )}
+      <div className={`w-100 text-center ${blurNav} mt-5`}>
+        <button
+          className="btn btn-info mb-5"
+          onClick={() => {
+            var quantity = localStorage.getItem("quantity");
+            quantity = Number(quantity);
+            quantity += 10;
+            return SetMoreTickets(quantity);
+          }}
+        >
+          Carregar Mais
+        </button>
+      </div>      
       {configUsers && <ManageUser />}
       {showExcludeUser && <ExcludeUser token={token.current} />}
     </Div>

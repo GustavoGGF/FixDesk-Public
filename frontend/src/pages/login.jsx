@@ -138,7 +138,7 @@ export default function Login() {
           return;
         });
     } catch (err) {
-      return console.log(err);
+      return console.error(err);
     }
   }
 
@@ -173,7 +173,7 @@ export default function Login() {
         animation.current = "animate__bounceOut"
       }
     } catch (err) {
-      return console.log(err);
+      return console.error(err);
     }
   }
 
