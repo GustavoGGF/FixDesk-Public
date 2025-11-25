@@ -1008,7 +1008,7 @@ export default function OpenTicketWindow({
         return console.error(err);
       }
     } else {
-      return setNameNWFiles();
+      return setNewFiles(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uploadNewFiles]);
