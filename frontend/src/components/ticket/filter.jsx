@@ -27,9 +27,6 @@ export default function FilterTickets({
   url,
   blurNav,
   themeFilter,
-  dateValue,
-  quantityMap,
-  statusFilter,
   userName,
   moreTickets,
 }) {
@@ -100,12 +97,16 @@ export default function FilterTickets({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moreTickets]);
 
-  // const {} = useContext(FilterContext);
   useEffect(() => {
-    dateSelect.current.value = dateValue;
-  }, [dateValue]);
+    MapQuantity()
+    MapStatus()
+    dateSelect.current.value = localStorage.getItem("order") === null ? "-id" : localStorage.getItem("order")
+  }, []);
 
-  useEffect(() => {
+  // Ajusta a quantidade pela armazenada pelo usuario
+  function MapQuantity(){
+    var quantity = localStorage.getItem("quantity") === null ? "10" : localStorage.getItem("quantity");
+
     try {
       // Mapeia valores de quantity para os refs correspondentes
       const refMapQuantity = {
@@ -116,7 +117,7 @@ export default function FilterTickets({
       };
 
       // Obtém o ref correspondente ao valor de quantity
-      const selectedRefQuantity = refMapQuantity[quantityMap];
+      const selectedRefQuantity = refMapQuantity[quantity];
 
       // Aplica o estilo apenas se o ref existir
       if (selectedRefQuantity?.current) {
@@ -125,11 +126,11 @@ export default function FilterTickets({
     } catch (err) {
       return console.log(err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quantityMap]);
-
-  useEffect(() => {
-    switch (statusFilter) {
+  }
+  // Ajusta o Status pelo que esta armazenado pelo usuario
+  function MapStatus(){
+    var status = localStorage.getItem("status") === null ? "open" : localStorage.getItem("status");
+    switch (status) {
       default:
         break;
       case "open":
@@ -145,7 +146,7 @@ export default function FilterTickets({
         btnAll.current.classList.add("btn-all"); // Remove o estilo do botão "All"
         break;
     }
-  }, [statusFilter]);
+  }
 
   function ValidateSelectFilter() {
     if (selectOccurrence.current) {
@@ -522,7 +523,6 @@ export default function FilterTickets({
           id="select-view-list"
           onClick={() => {
             setCardOrList("List");
-            setTicketList([]);
           }}
         >
           <ImgSelectView src={List} className="img-fluid" alt="Modo Lista" />

@@ -57,7 +57,6 @@ export default function DashboardTI() {
   const [ticketWindow, setTicketWindow] = useState(false);
   const [showEquipament, setShowEquipament] = useState(false);
   const [btnMore, setBtnMore] = useState(false);
-  const [initialFileticket, setInitialFileTicket] = useState(false);
   const [mountDataChat, setMountDataChat] = useState(false);
   const [fetchchat, setFetchChat] = useState(false);
   const [showPageConfig, setShowPageConfig] = useState(false);
@@ -66,11 +65,8 @@ export default function DashboardTI() {
    */
   const [blurNav, setBlurNav] = useState("");
   const [colorTheme, setColorTheme] = useState("");
-  const [lifeTime, setLifetime] = useState("");
   const [theme, setTheme] = useState("");
-  const [themeCard, setThemeCard] = useState("");
   const [themeFilter, setThemeFilter] = useState("");
-  const [ticketCOMPANY, setTicketCOMPANY] = useState("");
   const [ticketDEPARTMENT, setTicketDEPARTMENT] = useState("");
   const [ticketID, setTicketID] = useState("");
   const [ticketMAIL, setTicketMAIL] = useState("");
@@ -79,10 +75,7 @@ export default function DashboardTI() {
   const [ticketResponsible_Technician, setTicketResponsible_Technician] =
     useState("");
   const [ticketSECTOR, setTicketSECTOR] = useState("");
-  const [token, setToken] = useState("");
   const [equipament, setEquipament] = useState("");
-  const [dateValue, setDateValue] = useState("");
-  const [statusFIlter, setStatusFIlter] = useState("");
   const [ticketNAME, setTicketNAME] = useState("");
   const [observation, setObservation] = useState("");
   const [initialFileData, setInitialFileData] = useState("");
@@ -92,7 +85,6 @@ export default function DashboardTI() {
   /**
    * Variáveis de estado Int.
    */
-  const [quantityMap, setQuantityMap] = useState(0);
   const [moreTickets, SetMoreTickets] = useState(0);
   /**
    * Variáveis de estado Array.
@@ -100,15 +92,24 @@ export default function DashboardTI() {
   const [ticketsDash, setTicketsDash] = useState([]);
   const [userData, setUserData] = useState([]);
   const [mountInitialChat, setMountInitialChat] = useState([]);
-  const [techsNames, setTechsNames] = useState([]);
-  /**
-   * Variáveis de referência para o componente DashboardTI.
-   */
-
+  
+  // Variáveis de referência null 
   const sectionTicket = useRef(null);
-  const divRefs = useRef({});
   const timeoutTicketUpdateRef = useRef(null);
+  // Variáveis de referência dict
+  const divRefs = useRef({});  
+  // Variáveis de referência bool
+  const initialFileticket = useRef(false)
+  // Variáveis de referência string
+  const lifeTime = useRef("")
+  const themeCard = useRef("")
+  const ticketCOMPANY = useRef("")
+  const colorBorder = useRef("")
+  const token = useRef("")
+  // Variáveis de referência Array
+  const techsNames = useRef([])
 
+  // Variáveis de contexto para os chamados
   const {
     ticketData,
     setTicketData,
@@ -123,10 +124,10 @@ export default function DashboardTI() {
     ticketIDOpen,
     setTicketIDOpen,
   } = useContext(TicketContext);
-
+  // Variáveis de contexto para as menssagens
   const { typeError, messageError, setMessage, message } =
     useContext(MessageContext);
-
+  // Variáveis de contexto para usuario
   const { setConfigUsers, configUsers, showExcludeUser, setShowExcludeUser } =
     useContext(UserManagementContext);
 
@@ -229,7 +230,7 @@ export default function DashboardTI() {
       CloseTicket();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketWindowAtt]); // Dependências ajustadas para ambos os estados
+  }, [ticketWindowAtt]);
 
   useEffect(() => {
     if (changeTech && changeTech.length !== 0) {
@@ -240,27 +241,14 @@ export default function DashboardTI() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [changeTech]);
 
-  useEffect(() => {
-    if (quantityMap > 0) {
-      if (localStorage.getItem("quantity") < 5) {
-        setBtnMore(false);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quantityMap]);
-  /**
-   * Função ativada quando a tela de ticket for ativada.
-   * Se o textarea tiver conteúdo, a função para ajustar o tamanho do textarea é ativada.
-   */
-
   /**
    * Função para alterar o tema da aplicação para o modo escuro.
    * Limpa os filtros e estilos de cartões existentes e define o tema como "themeBlack".
    */
   function ThemeBlack() {
     setThemeFilter("");
-    setThemeCard("");
-    setColorTheme("colorBlack");
+    themeCard.current = ""
+    setColorTheme("color-light");
     setTheme("themeBlack");
   }
 
@@ -269,18 +257,15 @@ export default function DashboardTI() {
    * Define os estilos de cartões e filtros como claros e define o tema como "themeLight".
    */
   function ThemeLight() {
-    setThemeCard("theme-card-light");
+    themeCard.current = "theme-card-light";
     setThemeFilter("theme-filter-light");
-    setColorTheme("color-light");
     setTheme("theme-light");
   }
-
-  var colorBorder = ""; // Variável para armazenar cor da borda.
 
   /**
    * useEffect para carregar os dados do usuário armazenados localmente ao carregar a página.
    * Faz uma solicitação ao backend para obter os nomes dos técnicos e o token CSRF.
-   * Define os dados dos técnicos e o token CSRF nos useState correspondentes.
+   * Define os dados dos técnicos e o token CSRF.
    * Em caso de erro, exibe uma mensagem de erro fatal.
    */
   useEffect(() => {
@@ -297,82 +282,27 @@ export default function DashboardTI() {
         return response.json();
       })
       .then((data) => {
-        setTechsNames(data.techs);
-        setToken(data.token);
-        return userData;
+        techsNames.current = data.techs;
+        token.current = data.token;
       })
       .catch((err) => {
-        typeError.current = "FATAL ERROR";
-        messageError.current = err;
-        setMessage(true);
-        return console.log(err);
+        console.error(err);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  /**
-   * useEffect ativado quando os dados do usuário são alterados para buscar os chamados.
-   * Verifica se os dados do usuário estão disponíveis e não vazios.
-   * Define as flags de exibição da barra de navegação e do botão de menu suspenso como verdadeiras.
-   * Faz uma solicitação ao backend para obter os chamados de TI.
-   * Define os parâmetros de contagem, ordenação e estilo de visualização dos chamados.
-   * Define os chamados no estado correspondente.
-   * Em caso de erro, exibe uma mensagem de erro fatal.
-   */
-  useEffect(() => {
-    if (userData && Object.keys(userData).length > 0) {
-      try {
-        // Verifica se os dados do usuário estão disponíveis e não vazios.
-        var quantity = localStorage.getItem("quantity");
-        console.log(quantity);
-        
-        if (quantity === null) {
-          localStorage.setItem("quantity", "10");
-          quantity = 10;
-        }
-        setQuantityMap(quantity);
-
-        var status = localStorage.getItem("status");
-        if (status === null) {
-          localStorage.setItem("status", "open");
-          status = "open";
-        }
-        setStatusFIlter(status);
-
-        var order = localStorage.getItem("order");
-        if (order === null) {
-          order = "-id";
-        }
-        setDateValue(order);
-      } catch (err) {
-        typeError.current = "FATAL ERROR"; // Define o tipo de erro como "FATAL ERROR".
-        messageError.current = err; // Define a mensagem de erro.
-        setMessage(true); // Define a flag de exibição de mensagem como verdadeira.
-        return console.log(err); // Registra o erro no console.
-      }
-    } else {
-      return;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userData]);
 
   useEffect(() => {
     // Verificar se existem tickets e se o local storage foi inicializado
     if (ticketData && Object.keys(ticketData).length > 0) {
       // Obter o valor do local storage
-      const selectView = localStorage.getItem("selectView");
+      const selectView = localStorage.getItem("selectView") === null ? "card" : localStorage.getItem("selectView")
 
       // Verificar se o valor do local storage está definido
-      if (
-        selectView === null ||
-        (selectView === "card" && selectView !== "list")
-      ) {
-        // Se não estiver definido ou se for um valor inválido, definir como "card"
-        return CardView();
-      } else if (selectView === "list") {
-        // Se for "list", ativar a função de lista
-        return ListView();
-      }
+      if (selectView === "card") return CardView();
+
+      // Se for "list", ativar a função de lista
+      return ListView();
+      
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketData]);
@@ -427,7 +357,7 @@ export default function DashboardTI() {
         // Ajuste da borda do ticket com base no estado do chamado.
         if (ticket["open"] === false) {
           // Se o chamado não estiver aberto, ele foi finalizado.
-          colorBorder = "ticket-close"; // Define a borda como indicativa de chamado finalizado.
+          colorBorder.current = "ticket-close"; // Define a borda como indicativa de chamado finalizado.
         } else if (
           ticket["open"] === true &&
           ticket["responsible_technician"] === null
@@ -438,27 +368,27 @@ export default function DashboardTI() {
           const differenceDays = differenceMilisecond / (1000 * 60 * 60 * 24); // Converte a diferença para dias.
           if (differenceDays >= 7) {
             // Se o chamado estiver aberto há mais de 7 dias.
-            colorBorder = "ticket-urgent"; // Define a borda como indicativa de chamado urgente.
+            colorBorder.current = "ticket-urgent"; // Define a borda como indicativa de chamado urgente.
           } else {
             // Se o chamado estiver aberto há menos de 7 dias.
-            colorBorder = "ticket-open-not-view "; // Define a borda como indicativa de chamado aberto, mas não visualizado.
+            colorBorder.current = "ticket-open-not-view "; // Define a borda como indicativa de chamado aberto, mas não visualizado.
           }
         } else if (
           ticket["open"] === true &&
           ticket["responsible_technician"] !== null
         ) {
           // Se o chamado estiver aberto e com técnico responsável.
-          colorBorder = "ticket-open-in-view "; // Define a borda como indicativa de chamado aberto e em atendimento.
+          colorBorder.current = "ticket-open-in-view "; // Define a borda como indicativa de chamado aberto e em atendimento.
         } else if (ticket["open"] === null) {
           // Se o estado do chamado for nulo.
-          colorBorder = "ticket-stop"; // Define a borda como indicativa de chamado interrompido.
+          colorBorder.current = "ticket-stop"; // Define a borda como indicativa de chamado interrompido.
         }
 
         const Div = (
           <DivCard
             key={ticket["id"]}
             ref={(el) => (divRefs.current[`tck${ticket.id}`] = el)}
-            className={`animate__animated animate__zoomInDown no-border ${colorBorder} ${themeCard} tickets-method`}
+            className={`animate__animated animate__zoomInDown no-border ${colorBorder.current} ${themeCard.current} tickets-method`}
             onClick={() => {
               HelpdeskPage({ id: ticket["id"] });
             }}
@@ -629,7 +559,7 @@ export default function DashboardTI() {
       return fetch(`/helpdesk/change-last-viewer/${id}`, {
         method: "POST",
         headers: {
-          "X-CSRFToken": token, // Token CSRF para segurança da requisição
+          "X-CSRFToken": token.current, // Token CSRF para segurança da requisição
           "Content-Type": "application/json", // Define o formato do corpo da requisição como JSON
         },
         body: JSON.stringify({
@@ -654,7 +584,7 @@ export default function DashboardTI() {
       fetch("/helpdesk/ticket/" + id, {
         method: "GET",
         headers: {
-          "X-CSRFToken": token,
+          "X-CSRFToken": token.current,
         },
       })
         .then((response) => {
@@ -718,12 +648,12 @@ export default function DashboardTI() {
 
           const resultado = CalculateDiference(data.start_date);
 
-          const lifetime = `${resultado.diffDias} Dias e ${resultado.diffHoras}:${resultado.diffMinutos} Horas`;
+          lifeTime.current = `${resultado.diffDias} Dias e ${resultado.diffHoras}:${resultado.diffMinutos} Horas`;
 
           setTicketNAME(data.ticketRequester);
           setTicketDEPARTMENT(data.department);
           setTicketMAIL(data.mail);
-          setTicketCOMPANY(data.company);
+          ticketCOMPANY.current = data.company;
           setTicketSECTOR(data.sector);
           setTicketOCCURRENCE(data.occurrence);
           setTicketPROBLEMN(data.problemn);
@@ -735,7 +665,6 @@ export default function DashboardTI() {
             setEquipament(data.equipament);
             setDateAlocate(data.date_alocate);
           }
-          setLifetime(lifetime);
           if (
             data.responsible_technician &&
             data.responsible_technician.length !== 0
@@ -750,7 +679,7 @@ export default function DashboardTI() {
             setInitialFileData(data.file);
             setInitialFileName(data.name_file);
             setInitialContentFile(data.content_file);
-            setInitialFileTicket(true);
+            initialFileticket.current = true;
           }
           // Identifica o chat, verifica se contém valores e os separa em grupos de Data, Receptor e Horário.
           if (
@@ -824,7 +753,7 @@ export default function DashboardTI() {
     setInitialFileData("");
     setInitialFileName("");
     setInitialContentFile("");
-    setInitialFileTicket(false);
+    initialFileticket.current = false; 
     setBlurNav("");
     setTicketWindow(false);
     setEquipament("");
@@ -850,7 +779,7 @@ export default function DashboardTI() {
           />
         </DivZ>
       )}
-      <TitlePage className="text-center text-light mt-3">
+      <TitlePage className={`text-center mt-3 ${colorTheme}`}>
         Central de Gerenciamento de Chamados TI
       </TitlePage>
       <div
@@ -904,9 +833,6 @@ export default function DashboardTI() {
           url={"dashboards"}
           blurNav={""}
           themeFilter={themeFilter}
-          dateValue={dateValue}
-          quantityMap={quantityMap}
-          statusFilter={statusFIlter}
           userName={userData.name}
           moreTickets={moreTickets}
         />
@@ -923,20 +849,20 @@ export default function DashboardTI() {
         <OpenTicketWindow
           helpdesk={"dashboard"}
           ticketID={ticketID}
-          token={token}
+          token={token.current}
           CloseTicket={CloseTicket}
           ticketNAME={ticketNAME}
           ticketDEPARTMENT={ticketDEPARTMENT}
           ticketMAIL={ticketMAIL}
-          ticketCOMPANY={ticketCOMPANY}
+          ticketCOMPANY={ticketCOMPANY.current}
           ticketOCCURRENCE={ticketOCCURRENCE}
           ticketPROBLEMN={ticketPROBLEMN}
           ticketSECTOR={ticketSECTOR}
           equipament={equipament}
           dateAlocate={dateAlocate}
-          lifeTime={lifeTime}
+          lifeTime={lifeTime.current}
           ticketResponsible_Technician={ticketResponsible_Technician}
-          initialFileticket={initialFileticket}
+          initialFileticket={initialFileticket.current}
           showEquipament={showEquipament}
           observation={observation}
           mountDataChat={mountDataChat}
@@ -948,7 +874,7 @@ export default function DashboardTI() {
           initialFileName={initialFileName}
           initialContentFile={initialContentFile}
           mountInitialChat={mountInitialChat}
-          techsNames={techsNames}
+          techsNames={techsNames.current}
         />
       )}
       {btnMore && (
@@ -967,7 +893,7 @@ export default function DashboardTI() {
         </div>
       )}
       {configUsers && <ManageUser />}
-      {showExcludeUser && <ExcludeUser token={token} />}
+      {showExcludeUser && <ExcludeUser token={token.current} />}
     </Div>
   );
 }

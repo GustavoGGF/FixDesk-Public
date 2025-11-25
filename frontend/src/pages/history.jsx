@@ -1,4 +1,4 @@
-import React, {
+import {
   useState,
   useEffect,
   useRef,
@@ -82,8 +82,6 @@ export default function History() {
   const [themeFilter, setThemeFilter] = useState("");
   const [ticketID, setTicketID] = useState("");
   const [token, setToken] = useState("");
-  const [dateValue, setDateValue] = useState("");
-  const [statusFIlter, setStatusFIlter] = useState("");
   const [ticketNAME, setTicketNAME] = useState("");
   const [ticketDEPARTMENT, setTicketDEPARTMENT] = useState("");
   const [ticketMAIL, setTicketMAIL] = useState("");
@@ -117,7 +115,6 @@ export default function History() {
   const [mountInitialChat, setMountInitialChat] = useState([]);
 
   // Variaveis de estado Number
-  const [quantityMap, setQuantityMap] = useState(0);
   const [moreTickets, SetMoreTickets] = useState(0);
 
   let colorBorder = "";
@@ -173,7 +170,7 @@ export default function History() {
   function ThemeBlack() {
     setThemeFilter("");
     setThemeCard("");
-    setColorTheme("colorBlack");
+    setColorTheme("text-light");
     setTheme("themeBlack");
   }
 
@@ -181,7 +178,6 @@ export default function History() {
   function ThemeLight() {
     setThemeCard("themeCardLight");
     setThemeFilter("themeFilterLight");
-    setColorTheme("colorLight");
     setTheme("themeLight");
   }
 
@@ -218,12 +214,6 @@ export default function History() {
         if (order_current == null || order_current === "null") {
           localStorage.setItem("order", "-id");
           order_current = "-id";
-        } else {
-          if (order_current === "id") {
-            setDateValue("id");
-          } else {
-            setDateValue("-id");
-          }
         }
 
         // Envia os dados para o servidor através de uma requisição POST
@@ -261,8 +251,6 @@ export default function History() {
         // Atualiza os estados com os dados recebidos da API
         setToken(data.token);
         setTicketData(data.tickets);
-        setQuantityMap(quantity);
-        setStatusFIlter(status_current);
       } catch (error) {
         // Em caso de erro, define mensagens de erro e exibe no console para depuração
         typeError.current = "Erro Fatal";
@@ -819,16 +807,13 @@ export default function History() {
           />
         </DivZ>
       )}
-      <TitlePage className="text-center text-light mt-3">
+      <TitlePage className={`text-center mt-3 ${colorTheme}`}>
         Histórico de Chamados
       </TitlePage>
       <FilterTickets
         url={"history"}
         blurNav={blurNav}
         themeFilter={themeFilter}
-        dateValue={dateValue}
-        quantityMap={quantityMap}
-        statusFilter={statusFIlter}
         userName={Data.name}
         moreTickets={moreTickets}
       />

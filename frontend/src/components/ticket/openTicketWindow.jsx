@@ -277,7 +277,7 @@ export default function OpenTicketWindow({
   }, [mountDataChat]);
 
   useEffect(() => {
-    if (initialFileticket) {
+    if (initialFileticket.current) {
       ReloadFiles({
         files: initialFileData,
         name_file: initialFileName,

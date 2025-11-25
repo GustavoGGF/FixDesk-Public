@@ -19,13 +19,24 @@ export default function ListTable({ ticket }) {
 
   useEffect(() => {
     if (ticket) {
-      ticket.forEach((tk) => {
-        if (tk["open"] === false) {
-          colorBorder.current = "ticket-close";
-        } else if (
-          tk["open"] === true &&
-          tk["responsible_technician"] === null
-        ) {
+      setTicketList([])
+      GenTable()
+    }
+    setLoading(false);
+  }, [ticket]);
+
+  function genDate(date) {
+    return new Date(date).toLocaleString("pt-BR");
+  }
+
+  function GenTable(){
+    ticket.forEach((tk) => {
+      if (tk["open"] === false) {
+        colorBorder.current = "ticket-close";
+      } else if (
+        tk["open"] === true &&
+        tk["responsible_technician"] === null
+      ) {
           var date = new Date(tk["start_date"]);
           const currentDate = new Date();
           const diferenceMilisecond = currentDate - date;
@@ -72,13 +83,7 @@ export default function ListTable({ ticket }) {
         );
 
         setTicketList((list) => [...list, Div]);
-      });
-    }
-    setLoading(false);
-  }, [ticket]);
-
-  function genDate(date) {
-    return new Date(date).toLocaleString("pt-BR");
+    });
   }
 
   return (
